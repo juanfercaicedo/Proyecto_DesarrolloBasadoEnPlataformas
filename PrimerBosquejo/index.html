@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Brasa Viva, hamburguesas artesanales y sabores hechos al momento.">
+  <title>Brasa Viva | Sabor que se nota</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#inicio" aria-label="Brasa Viva, inicio">
+      <span class="brand-mark">BV</span>
+      <span>Brasa <strong>Viva</strong></span>
+    </a>
+
+    <nav class="main-nav" aria-label="Navegación principal">
+      <a href="#menu">Menú</a>
+      <a href="#promos">Promos</a>
+      <a href="#ubicaciones">Ubicaciones</a>
+    </nav>
+
+    <a class="header-order" href="#menu">Pedir ahora <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main>
+    <section class="hero" id="inicio">
+      <div class="hero-copy">
+        <p class="eyebrow">Hecho al momento · Desde 2018</p>
+        <h1>El hambre<br><em>pide fuego.</em></h1>
+        <p class="hero-text">Hamburguesas artesanales, papas crujientes y salsas de la casa. Sabor honesto para comerlo como quieras.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#menu">Ver el menú <span aria-hidden="true">↓</span></a>
+          <a class="button button-quiet" href="#ubicaciones">Encontrar restaurante <span aria-hidden="true">⌖</span></a>
+        </div>
+        <div class="hero-note"><span class="status-dot"></span> Ordena online y recoge en 20 min</div>
+      </div>
+      <div class="hero-image">
+        <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1200&q=85" alt="Hamburguesa artesanal con queso, lechuga y tomate">
+        <div class="image-sticker">100%<br><span>casero</span></div>
+        <div class="hero-caption"><span>01</span><strong>La clásica que<br>nunca falla.</strong></div>
+      </div>
+    </section>
+
+    <section class="order-strip" aria-label="Opciones de pedido">
+      <div class="strip-intro"><span class="flame">✦</span><span>¿Cómo lo quieres?</span></div>
+      <a href="#menu"><strong>Delivery</strong><small>Hasta tu puerta <span>→</span></small></a>
+      <a href="#ubicaciones"><strong>Para llevar</strong><small>Recoge sin esperar <span>→</span></small></a>
+      <a href="#ubicaciones"><strong>En restaurante</strong><small>Encuentra tu mesa <span>→</span></small></a>
+    </section>
+
+    <section class="menu-section" id="menu">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Directo de la parrilla</p>
+          <h2>Los favoritos<br><em>de la casa</em></h2>
+        </div>
+        <a class="text-link" href="#menu-completo">Ver menú completo <span>↗</span></a>
+      </div>
+      <div class="category-tabs" aria-label="Categorías del menú">
+        <a class="active" href="#hamburguesas">Hamburguesas</a>
+        <a href="#acompanamientos">Acompañamientos</a>
+        <a href="#bebidas">Bebidas</a>
+        <a href="#postres">Postres</a>
+      </div>
+
+      <div class="product-grid" id="hamburguesas">
+        <article class="product-card featured-card">
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=85" alt="Hamburguesa Brasa Viva con doble queso"><span class="tag">Más pedida</span></div>
+          <div class="product-info"><div><h3>La Brasa</h3><p>Doble carne, cheddar, cebolla crispy y salsa BV.</p></div><strong class="price">$12.900</strong></div>
+          <button class="add-button" type="button" aria-label="Agregar La Brasa al pedido">+</button>
+        </article>
+        <article class="product-card">
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?auto=format&fit=crop&w=800&q=85" alt="Hamburguesa picante con jalapeños"><span class="tag spicy">Picante</span></div>
+          <div class="product-info"><div><h3>La Fuego</h3><p>Carne, pepper jack, jalapeños y mayo ahumada.</p></div><strong class="price">$13.500</strong></div>
+          <button class="add-button" type="button" aria-label="Agregar La Fuego al pedido">+</button>
+        </article>
+        <article class="product-card">
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1520072959219-c595dc870360?auto=format&fit=crop&w=800&q=85" alt="Hamburguesa vegetariana con vegetales frescos"><span class="tag veggie">Veggie</span></div>
+          <div class="product-info"><div><h3>La Verde</h3><p>Portobello, provolone, rúcula y pesto de la casa.</p></div><strong class="price">$11.900</strong></div>
+          <button class="add-button" type="button" aria-label="Agregar La Verde al pedido">+</button>
+        </article>
+      </div>
+    </section>
+
+    <section class="promo-section" id="promos">
+      <div class="promo-copy"><p class="eyebrow">Solo por esta semana</p><h2>Combo de<br><em>medio día</em></h2><p>Tu hamburguesa favorita + papas BV + bebida fría.</p><a class="button button-dark" href="#menu">Lo quiero <span>↗</span></a></div>
+      <div class="promo-image"><img src="https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=1000&q=85" alt="Papas fritas doradas con salsa de tomate"></div>
+      <div class="promo-price"><small>Desde</small><strong>$15.900</strong><span>Ahorras $3.000</span></div>
+    </section>
+
+    <section class="locations-section" id="ubicaciones">
+      <div><p class="eyebrow">Siempre cerca de ti</p><h2>Encuentra tu<br><em>Brasa Viva</em></h2><p class="location-text">Elige tu restaurante más cercano y mira los horarios de atención.</p></div>
+      <div class="location-card"><div class="map-placeholder" aria-hidden="true"><span class="map-pin">⌖</span><span class="map-road road-one"></span><span class="map-road road-two"></span></div><div class="location-details"><span class="open-label"><span class="status-dot"></span> Abierto ahora</span><h3>Brasa Viva Centro</h3><p>Cra. 7 # 72-41 · Bogotá</p><a href="#como-llegar">Cómo llegar <span>↗</span></a></div></div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="brand"><span class="brand-mark">BV</span><span>Brasa <strong>Viva</strong></span></div><p>Sabor que se nota.</p><div class="footer-links"><a href="#instagram">Instagram</a><a href="#contacto">Contacto</a><a href="#privacidad">Privacidad</a></div><small>© 2024 Brasa Viva</small></footer>
+  <a class="mobile-order" href="#menu"><span>Tu pedido está vacío</span><strong>Pedir ahora <span aria-hidden="true">→</span></strong></a>
+</body>
+</html>
