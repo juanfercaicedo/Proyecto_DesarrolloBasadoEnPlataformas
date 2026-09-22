@@ -9,9 +9,28 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script>
+    tailwind = {
+      theme: {
+        extend: {
+          colors: {
+            brasa: "#e3482e",
+            carbon: "#1e1e1b",
+            maiz: "#f6bb3e",
+            papel: "#fffdf8"
+          },
+          fontFamily: {
+            sans: ["DM Sans", "sans-serif"],
+            display: ["Oswald", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <header class="site-header">
+<body class="bg-papel text-carbon antialiased">
+  <header class="site-header transition-[box-shadow] duration-300 hover:shadow-sm">
     <a class="brand" href="#inicio" aria-label="Brasa Viva, inicio">
       <span class="brand-mark">BV</span>
       <span>Brasa <strong>Viva</strong></span>
@@ -23,7 +42,7 @@
       <a href="#ubicaciones">Ubicaciones</a>
     </nav>
 
-    <a class="header-order" href="#menu">Pedir ahora <span aria-hidden="true">↗</span></a>
+    <a class="header-order transition-colors duration-200 hover:text-brasa" href="#menu">Pedir ahora <span aria-hidden="true">↗</span></a>
   </header>
 
   <main>
@@ -33,7 +52,7 @@
         <h1>El hambre<br><em>pide fuego.</em></h1>
         <p class="hero-text">Hamburguesas artesanales, papas crujientes y salsas de la casa. Sabor honesto para comerlo como quieras.</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="#menu">Ver el menú <span aria-hidden="true">↓</span></a>
+          <a class="button button-primary rounded-none transition-transform duration-200 hover:-translate-y-1" href="#menu">Ver el menú <span aria-hidden="true">↓</span></a>
           <a class="button button-quiet" href="#ubicaciones">Encontrar restaurante <span aria-hidden="true">⌖</span></a>
         </div>
         <div class="hero-note"><span class="status-dot"></span> Ordena online y recoge en 20 min</div>
@@ -67,21 +86,21 @@
         <a href="#hamburguesas" data-category="postres">Postres</a>
       </div>
 
-      <div class="product-grid" id="hamburguesas">
+      <div class="product-grid md:gap-6" id="hamburguesas">
         <article class="product-card featured-card" data-category="hamburguesas" data-product="La Brasa" data-price="12900">
           <div class="product-image"><img src="https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=85" alt="Hamburguesa Brasa Viva con doble queso"><span class="tag">Más pedida</span></div>
           <div class="product-info"><div><h3>La Brasa</h3><p>Doble carne, cheddar, cebolla crispy y salsa BV.</p></div><strong class="price">$12.99</strong></div>
-          <button class="add-button" type="button" aria-label="Personalizar y agregar La Brasa al pedido">+</button>
+          <button class="add-button transition-colors duration-200 hover:bg-brasa" type="button" aria-label="Personalizar y agregar La Brasa al pedido">+</button>
         </article>
         <article class="product-card" data-category="hamburguesas" data-product="La Fuego" data-price="13500">
           <div class="product-image"><img src="https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?auto=format&fit=crop&w=800&q=85" alt="Hamburguesa picante con jalapeños"><span class="tag spicy">Picante</span></div>
           <div class="product-info"><div><h3>La Fuego</h3><p>Carne, pepper jack, jalapeños y mayo ahumada.</p></div><strong class="price">$13.50</strong></div>
-          <button class="add-button" type="button" aria-label="Personalizar y agregar La Fuego al pedido">+</button>
+          <button class="add-button transition-colors duration-200 hover:bg-brasa" type="button" aria-label="Personalizar y agregar La Fuego al pedido">+</button>
         </article>
         <article class="product-card" data-category="hamburguesas" data-product="La Verde" data-price="11900">
           <div class="product-image"><img src="https://images.unsplash.com/photo-1520072959219-c595dc870360?auto=format&fit=crop&w=800&q=85" alt="Hamburguesa vegetariana con vegetales frescos"><span class="tag veggie">Veggie</span></div>
           <div class="product-info"><div><h3>La Verde</h3><p>Portobello, provolone, rúcula y pesto de la casa.</p></div><strong class="price">$11.99</strong></div>
-          <button class="add-button" type="button" aria-label="Personalizar y agregar La Verde al pedido">+</button>
+          <button class="add-button transition-colors duration-200 hover:bg-brasa" type="button" aria-label="Personalizar y agregar La Verde al pedido">+</button>
         </article>
       </div>
     </section>
