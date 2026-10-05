@@ -31,7 +31,7 @@ jobs:
       - name: Preparar archivos del sitio
         uses: actions/upload-pages-artifact@v3
         with:
-          path: PrimerBosquejo
+          path: src
 
       - name: Publicar sitio
         id: deployment

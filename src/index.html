@@ -7,27 +7,9 @@
   <title>Brasa Viva | Sabor que se nota</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script>
-    tailwind = {
-      theme: {
-        extend: {
-          colors: {
-            brasa: "#e3482e",
-            carbon: "#1e1e1b",
-            maiz: "#f6bb3e",
-            papel: "#fffdf8"
-          },
-          fontFamily: {
-            sans: ["DM Sans", "sans-serif"],
-            display: ["Oswald", "sans-serif"]
-          }
-        }
-      }
-    };
-  </script>
-  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-papel text-carbon antialiased">
   <header class="site-header transition-[box-shadow] duration-300 hover:shadow-sm">
@@ -79,14 +61,14 @@
         </div>
         <a class="text-link" href="#menu">Ver menú completo <span>↗</span></a>
       </div>
-      <div class="category-tabs" aria-label="Categorías del menú">
-        <a class="active" href="#hamburguesas" data-category="hamburguesas">Hamburguesas</a>
-        <a href="#hamburguesas" data-category="acompanamientos">Acompañamientos</a>
-        <a href="#hamburguesas" data-category="bebidas">Bebidas</a>
-        <a href="#hamburguesas" data-category="postres">Postres</a>
+      <div class="category-tabs" role="group" aria-label="Filtrar productos por categoría">
+        <button class="active" type="button" data-category="hamburguesas" aria-pressed="true">Hamburguesas</button>
+        <button type="button" data-category="acompanamientos" aria-pressed="false">Acompañamientos</button>
+        <button type="button" data-category="bebidas" aria-pressed="false">Bebidas</button>
+        <button type="button" data-category="postres" aria-pressed="false">Postres</button>
       </div>
 
-      <div class="product-grid md:gap-6" id="hamburguesas">
+      <div class="product-grid" id="menu-products" aria-live="polite">
         <article class="product-card featured-card" data-category="hamburguesas" data-product="La Brasa" data-price="1299">
           <div class="product-image"><img src="https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=85" alt="Hamburguesa Brasa Viva con doble queso"><span class="tag">Más pedida</span></div>
           <div class="product-info"><div><h3>La Brasa</h3><p>Doble carne, cheddar, cebolla crispy y salsa BV.</p></div><strong class="price">$12.99</strong></div>
@@ -119,7 +101,7 @@
 
   <footer class="site-footer"><div class="brand"><span class="brand-mark">BV</span><span>Brasa <strong>Viva</strong></span></div><p>Sabor que se nota.</p><div class="footer-links"><a href="https://www.instagram.com/" rel="noreferrer">Instagram</a><a href="mailto:hola@brasaviva.co">Contacto</a><a href="#inicio">Privacidad</a></div><small>© 2024 Brasa Viva</small></footer>
 
-  <div class="order-drawer" id="order-drawer" aria-hidden="true" role="dialog" aria-labelledby="cart-title">
+  <div class="order-drawer" id="order-drawer" aria-hidden="true" aria-modal="true" aria-labelledby="cart-title" role="dialog" hidden>
     <div class="drawer-panel">
       <button class="drawer-close" id="close-cart" type="button" aria-label="Cerrar pedido">×</button>
       <p class="eyebrow">Tu selección</p>
@@ -132,7 +114,7 @@
     </div>
   </div>
   <p class="sr-only" id="region-aria-live" aria-live="polite"></p>
-  <button class="mobile-order" id="open-cart" type="button"><span id="mobile-cart-label">Tu pedido está vacío</span><strong>Pedir ahora <span aria-hidden="true">→</span></strong></button>
-  <script src="script.js"></script>
+  <button class="mobile-order" id="open-cart" type="button" aria-label="Abrir tu pedido"><span id="mobile-cart-label">Tu pedido está vacío</span><strong aria-hidden="true">Pedir ahora <span>→</span></strong></button>
+  <script src="script.js" defer></script>
 </body>
 </html>

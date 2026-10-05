@@ -5,7 +5,11 @@ const emptyCart = document.querySelector("#empty-cart");
 const totalElement = document.querySelector("#cart-total");
 const liveRegion = document.querySelector("#region-aria-live");
 
-const formatPrice = (value) => `$${value.toLocaleString("es-CO")}`;
+const formatPrice = (value) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value / 100);
 
 function renderCart() {
   cartList.innerHTML = "";
@@ -31,8 +35,8 @@ function closeCart() { drawer.classList.remove("is-open"); drawer.setAttribute("
 function addProduct(card) {
   const name = card.dataset.product;
   const price = Number(card.dataset.price);
-  const customization = window.confirm(`¿Quieres agregar queso extra a ${name} por $1.500?\nAceptar: queso extra · Cancelar: sin extras`);
-  const extra = customization ? 1500 : 0;
+  const customization = window.confirm(`¿Quieres agregar queso extra a ${name} por $1.50?\nAceptar: queso extra · Cancelar: sin extras`);
+  const extra = customization ? 150 : 0;
   const label = customization ? "Queso extra" : "Sin extras";
   const existing = cart.find((item) => item.name === name && item.extra === extra);
   if (existing) existing.quantity += 1;
