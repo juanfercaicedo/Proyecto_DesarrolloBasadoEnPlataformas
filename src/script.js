@@ -8,6 +8,8 @@
   const emptyCategoryStatus = document.querySelector("#category-empty");
   const mobileCartLabel = document.querySelector("#mobile-cart-label");
   const openCartButton = document.querySelector("#open-cart");
+  const headerCartButton = document.querySelector("#header-cart");
+  const headerCartCount = document.querySelector("#header-cart-count");
   const themeToggle = document.querySelector("#theme-toggle");
   const themeToggleIcon = document.querySelector("#theme-toggle-icon");
   const categoryButtons = document.querySelectorAll(".category-tabs button");
@@ -56,6 +58,79 @@
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value / 100);
+
+  function isValidCartItem(item) {
+    if (
+      !item ||
+      typeof item.name !== "string" ||
+      !Number.isSafeInteger(item.price) ||
+      !Number.isSafeInteger(item.extra) ||
+      !Number.isSafeInteger(item.quantity) ||
+      item.quantity < 1
+    ) {
+      return false;
+    }
+
+    const productCard = Array.from(productCards).find(
+      (card) =>
+        card.dataset.product === item.name &&
+        Number(card.dataset.price) === item.price,
+    );
+    const expectedCustomization =
+      item.extra === 150 ? "Queso extra" : "Sin extras";
+
+    return Boolean(
+      productCard &&
+        (item.extra === 0 || item.extra === 150) &&
+        item.customization === expectedCustomization,
+    );
+  }
+
+  function restoreCart() {
+    try {
+      const storedCart = window.localStorage.getItem("brasa-viva-cart");
+      if (storedCart === null) return [];
+
+      const parsedCart = JSON.parse(storedCart);
+      if (!Array.isArray(parsedCart) || !parsedCart.every(isValidCartItem)) {
+        throw new Error("Los artículos guardados tienen un formato inválido.");
+      }
+
+      return parsedCart.map(
+        ({ name, price, extra, customization, quantity }) => ({
+          name,
+          price,
+          extra,
+          customization,
+          quantity,
+        }),
+      );
+    } catch (error) {
+      console.error("No se pudo restaurar el carrito guardado.", error);
+      liveRegion.textContent =
+        "No se pudo restaurar el carrito guardado. El pedido empieza vacío.";
+      return [];
+    }
+  }
+
+  function saveCart() {
+    try {
+      const items = cart.map(
+        ({ name, price, extra, customization, quantity }) => ({
+          name,
+          price,
+          extra,
+          customization,
+          quantity,
+        }),
+      );
+      window.localStorage.setItem("brasa-viva-cart", JSON.stringify(items));
+      return true;
+    } catch (error) {
+      console.error("No se pudo guardar el carrito.", error);
+      return false;
+    }
+  }
 
   function renderCart() {
     cartList.replaceChildren();
@@ -113,6 +188,17 @@
 
     emptyCart.hidden = cart.length > 0;
     totalElement.textContent = formatPrice(total);
+    const cartLabel = itemCount
+      ? `Abrir carrito, ${itemCount} producto${itemCount === 1 ? "" : "s"}, total ${formatPrice(total)}`
+      : "Abrir carrito, vacío";
+    headerCartCount.textContent = String(itemCount);
+    headerCartButton.setAttribute("aria-label", cartLabel);
+    openCartButton.setAttribute(
+      "aria-label",
+      itemCount
+        ? `Abrir tu pedido, ${itemCount} producto${itemCount === 1 ? "" : "s"}`
+        : "Abrir tu pedido, vacío",
+    );
     mobileCartLabel.textContent = itemCount
       ? `${itemCount} producto${itemCount === 1 ? "" : "s"} · ${formatPrice(total)}`
       : "Tu pedido está vacío";
@@ -123,6 +209,8 @@
     drawer.hidden = false;
     drawer.classList.add("is-open");
     drawer.setAttribute("aria-hidden", "false");
+    headerCartButton.setAttribute("aria-expanded", "true");
+    openCartButton.setAttribute("aria-expanded", "true");
     document.querySelector("#close-cart").focus();
   }
 
@@ -130,6 +218,8 @@
     drawer.classList.remove("is-open");
     drawer.setAttribute("aria-hidden", "true");
     drawer.hidden = true;
+    headerCartButton.setAttribute("aria-expanded", "false");
+    openCartButton.setAttribute("aria-expanded", "false");
     if (previouslyFocusedElement instanceof HTMLElement) {
       previouslyFocusedElement.focus();
     } else {
@@ -160,7 +250,8 @@
     }
 
     renderCart();
-    liveRegion.textContent = `${name} agregado. ${label}.`;
+    const saved = saveCart();
+    liveRegion.textContent = `${name} agregado. ${label}.${saved ? "" : " No se pudo guardar el carrito."}`;
     openCart();
   }
 
@@ -209,6 +300,7 @@
     const itemRemoved = item.quantity <= 0;
     if (itemRemoved) cart.splice(index, 1);
     renderCart();
+    const saved = saveCart();
 
     if (itemRemoved) {
       const nearbyIndex = Math.min(index, cart.length - 1);
@@ -219,7 +311,7 @@
             )
           : null;
       (nearbyControl ?? document.querySelector("#cart-title")).focus();
-      liveRegion.textContent = `${itemName} eliminado del pedido. Total: ${totalElement.textContent}.`;
+      liveRegion.textContent = `${itemName} eliminado del pedido. Total: ${totalElement.textContent}.${saved ? "" : " No se pudo guardar el carrito."}`;
       return;
     }
 
@@ -228,10 +320,11 @@
         `button[data-action="${action}"][data-index="${index}"]`,
       )
       .focus();
-    liveRegion.textContent = `${itemName}: cantidad ${item.quantity}. Total: ${totalElement.textContent}.`;
+    liveRegion.textContent = `${itemName}: cantidad ${item.quantity}. Total: ${totalElement.textContent}.${saved ? "" : " No se pudo guardar el carrito."}`;
   });
 
   openCartButton.addEventListener("click", openCart);
+  headerCartButton.addEventListener("click", openCart);
   document.querySelector("#close-cart").addEventListener("click", closeCart);
   drawer.addEventListener("click", (event) => {
     if (event.target === drawer) closeCart();
@@ -275,5 +368,6 @@
     );
   });
 
+  cart.push(...restoreCart());
   renderCart();
 })();

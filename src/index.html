@@ -24,6 +24,14 @@
     </nav>
 
     <div class="header-actions">
+      <button class="header-cart" id="header-cart" type="button" aria-label="Abrir carrito, vacío" aria-controls="order-drawer" aria-haspopup="dialog" aria-expanded="false">
+        <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+          <path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 8H6"></path>
+          <circle cx="10" cy="20" r="1"></circle>
+          <circle cx="18" cy="20" r="1"></circle>
+        </svg>
+        <span class="header-cart-count" id="header-cart-count" aria-hidden="true">0</span>
+      </button>
       <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Activar modo oscuro" aria-pressed="false" title="Activar modo oscuro">
         <span id="theme-toggle-icon" aria-hidden="true">☾</span>
       </button>
@@ -119,7 +127,7 @@
     </div>
   </div>
   <p class="sr-only" id="region-aria-live" aria-live="polite"></p>
-  <button class="mobile-order" id="open-cart" type="button" aria-label="Abrir tu pedido"><span id="mobile-cart-label">Tu pedido está vacío</span><strong aria-hidden="true">Pedir ahora <span>→</span></strong></button>
+  <button class="mobile-order" id="open-cart" type="button" aria-label="Abrir tu pedido, vacío" aria-controls="order-drawer" aria-haspopup="dialog" aria-expanded="false"><span id="mobile-cart-label">Tu pedido está vacío</span><strong aria-hidden="true">Pedir ahora <span>→</span></strong></button>
   <script src="script.js" defer></script>
 </body>
 </html>
