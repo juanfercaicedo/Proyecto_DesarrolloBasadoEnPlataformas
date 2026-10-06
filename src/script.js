@@ -8,9 +8,46 @@
   const emptyCategoryStatus = document.querySelector("#category-empty");
   const mobileCartLabel = document.querySelector("#mobile-cart-label");
   const openCartButton = document.querySelector("#open-cart");
+  const themeToggle = document.querySelector("#theme-toggle");
+  const themeToggleIcon = document.querySelector("#theme-toggle-icon");
   const categoryButtons = document.querySelectorAll(".category-tabs button");
   const productCards = document.querySelectorAll(".product-card");
   let previouslyFocusedElement;
+
+  function updateThemeToggle(isDark) {
+    const label = isDark ? "Activar modo claro" : "Activar modo oscuro";
+    themeToggle.setAttribute("aria-label", label);
+    themeToggle.setAttribute("title", label);
+    themeToggle.setAttribute("aria-pressed", String(isDark));
+    themeToggleIcon.textContent = isDark ? "☀" : "☾";
+  }
+
+  let isDarkTheme = false;
+  try {
+    isDarkTheme = window.localStorage.getItem("brasa-viva-theme") === "dark";
+  } catch (error) {
+    console.error("No se pudo leer la preferencia de tema guardada.", error);
+  }
+  document.body.dataset.theme = isDarkTheme ? "dark" : "light";
+  updateThemeToggle(isDarkTheme);
+
+  themeToggle.addEventListener("click", () => {
+    isDarkTheme = !isDarkTheme;
+    document.body.dataset.theme = isDarkTheme ? "dark" : "light";
+    updateThemeToggle(isDarkTheme);
+    liveRegion.textContent = isDarkTheme
+      ? "Modo oscuro activado."
+      : "Modo claro activado.";
+    try {
+      window.localStorage.setItem(
+        "brasa-viva-theme",
+        isDarkTheme ? "dark" : "light",
+      );
+    } catch (error) {
+      console.error("No se pudo guardar la preferencia de tema.", error);
+      liveRegion.textContent += " No se pudo guardar la preferencia.";
+    }
+  });
 
   const formatPrice = (value) =>
     new Intl.NumberFormat("en-US", {
