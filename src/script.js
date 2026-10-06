@@ -5,6 +5,7 @@
   const emptyCart = document.querySelector("#empty-cart");
   const totalElement = document.querySelector("#cart-total");
   const liveRegion = document.querySelector("#region-aria-live");
+  const emptyCategoryStatus = document.querySelector("#category-empty");
   const mobileCartLabel = document.querySelector("#mobile-cart-label");
   const openCartButton = document.querySelector("#open-cart");
   const categoryButtons = document.querySelectorAll(".category-tabs button");
@@ -145,6 +146,13 @@
       productCards.forEach((card) => {
         card.hidden = card.dataset.category !== category;
       });
+      const hasProducts = Array.from(productCards).some(
+        (card) => card.dataset.category === category,
+      );
+      emptyCategoryStatus.hidden = hasProducts;
+      emptyCategoryStatus.textContent = hasProducts
+        ? ""
+        : "Aún no hay productos en esta categoría.";
       liveRegion.textContent = `Categoría ${button.textContent.trim()} seleccionada.`;
     });
   });
@@ -158,9 +166,32 @@
     const item = cart[index];
     if (!item || !Number.isInteger(index)) return;
 
+    const action = button.dataset.action;
+    const itemName = item.name;
     item.quantity += button.dataset.action === "increase" ? 1 : -1;
-    if (item.quantity <= 0) cart.splice(index, 1);
+    const itemRemoved = item.quantity <= 0;
+    if (itemRemoved) cart.splice(index, 1);
     renderCart();
+
+    if (itemRemoved) {
+      const nearbyIndex = Math.min(index, cart.length - 1);
+      const nearbyControl =
+        nearbyIndex >= 0
+          ? cartList.querySelector(
+              `button[data-action="decrease"][data-index="${nearbyIndex}"]`,
+            )
+          : null;
+      (nearbyControl ?? document.querySelector("#cart-title")).focus();
+      liveRegion.textContent = `${itemName} eliminado del pedido. Total: ${totalElement.textContent}.`;
+      return;
+    }
+
+    cartList
+      .querySelector(
+        `button[data-action="${action}"][data-index="${index}"]`,
+      )
+      .focus();
+    liveRegion.textContent = `${itemName}: cantidad ${item.quantity}. Total: ${totalElement.textContent}.`;
   });
 
   openCartButton.addEventListener("click", openCart);

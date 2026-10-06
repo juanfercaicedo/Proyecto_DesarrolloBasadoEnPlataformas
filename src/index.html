@@ -7,7 +7,6 @@
   <title>Brasa Viva | Sabor que se nota</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -70,32 +69,33 @@
 
       <div class="product-grid" id="menu-products" aria-live="polite">
         <article class="product-card featured-card" data-category="hamburguesas" data-product="La Brasa" data-price="1299">
-          <div class="product-image"><img src="https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=85" alt="Hamburguesa Brasa Viva con doble queso"><span class="tag">Más pedida</span></div>
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=85" alt="Hamburguesa Brasa Viva con doble queso" loading="lazy" decoding="async"><span class="tag">Más pedida</span></div>
           <div class="product-info"><div><h3>La Brasa</h3><p>Doble carne, cheddar, cebolla crispy y salsa BV.</p></div><strong class="price">$12.99</strong></div>
           <button class="add-button transition-colors duration-200 hover:bg-brasa" type="button" aria-label="Personalizar y agregar La Brasa al pedido">+</button>
         </article>
         <article class="product-card" data-category="hamburguesas" data-product="La Fuego" data-price="1350">
-          <div class="product-image"><img src="https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?auto=format&fit=crop&w=800&q=85" alt="Hamburguesa picante con jalapeños"><span class="tag spicy">Picante</span></div>
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?auto=format&fit=crop&w=800&q=85" alt="Hamburguesa picante con jalapeños" loading="lazy" decoding="async"><span class="tag spicy">Picante</span></div>
           <div class="product-info"><div><h3>La Fuego</h3><p>Carne, pepper jack, jalapeños y mayo ahumada.</p></div><strong class="price">$13.50</strong></div>
           <button class="add-button transition-colors duration-200 hover:bg-brasa" type="button" aria-label="Personalizar y agregar La Fuego al pedido">+</button>
         </article>
         <article class="product-card" data-category="hamburguesas" data-product="La Verde" data-price="1199">
-          <div class="product-image"><img src="https://images.unsplash.com/photo-1520072959219-c595dc870360?auto=format&fit=crop&w=800&q=85" alt="Hamburguesa vegetariana con vegetales frescos"><span class="tag veggie">Veggie</span></div>
+          <div class="product-image"><img src="https://images.unsplash.com/photo-1520072959219-c595dc870360?auto=format&fit=crop&w=800&q=85" alt="Hamburguesa vegetariana con vegetales frescos" loading="lazy" decoding="async"><span class="tag veggie">Veggie</span></div>
           <div class="product-info"><div><h3>La Verde</h3><p>Portobello, provolone, rúcula y pesto de la casa.</p></div><strong class="price">$11.99</strong></div>
           <button class="add-button transition-colors duration-200 hover:bg-brasa" type="button" aria-label="Personalizar y agregar La Verde al pedido">+</button>
         </article>
       </div>
+      <p class="category-empty" id="category-empty" role="status" aria-live="polite" hidden></p>
     </section>
 
     <section class="promo-section" id="promos">
       <div class="promo-copy"><p class="eyebrow">Solo por esta semana</p><h2>Combo de<br><em>medio día</em></h2><p>Tu hamburguesa favorita + papas BV + bebida fría.</p><a class="button button-dark" href="#menu">Lo quiero <span>↗</span></a></div>
-      <div class="promo-image"><img src="https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=1000&q=85" alt="Papas fritas doradas con salsa de tomate"></div>
+      <div class="promo-image"><img src="https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=1000&q=85" alt="Papas fritas doradas con salsa de tomate" loading="lazy" decoding="async"></div>
       <div class="promo-price"><small>Desde</small><strong>$15.99</strong><span>Ahorras $3.00</span></div>
     </section>
 
     <section class="locations-section" id="ubicaciones">
       <div><p class="eyebrow">Siempre cerca de ti</p><h2>Encuentra tu<br><em>Brasa Viva</em></h2><p class="location-text">Elige tu restaurante más cercano y mira los horarios de atención.</p></div>
-      <div class="location-card"><div class="map-placeholder" aria-hidden="true"><span class="map-pin">⌖</span><span class="map-road road-one"></span><span class="map-road road-two"></span></div><div class="location-details"><span class="open-label"><span class="status-dot"></span> Abierto ahora</span><h3>Brasa Viva Centro</h3><p>Cra. 7 # 72-41 · Bogotá</p><a href="#como-llegar">Cómo llegar <span>↗</span></a></div></div>
+      <div class="location-card"><div class="map-placeholder" aria-hidden="true"><span class="map-pin">⌖</span><span class="map-road road-one"></span><span class="map-road road-two"></span></div><div class="location-details"><span class="open-label"><span class="status-dot"></span> Abierto ahora</span><h3>Brasa Viva Centro</h3><p>Cra. 7 # 72-41 · Bogotá</p><a href="https://www.google.com/maps/search/?api=1&amp;query=Cra.%207%20%23%2072-41%2C%20Bogot%C3%A1" aria-label="Cómo llegar a Cra. 7 # 72-41, Bogotá en Google Maps">Cómo llegar <span aria-hidden="true">↗</span></a></div></div>
     </section>
   </main>
 
@@ -105,7 +105,7 @@
     <div class="drawer-panel">
       <button class="drawer-close" id="close-cart" type="button" aria-label="Cerrar pedido">×</button>
       <p class="eyebrow">Tu selección</p>
-      <h2 id="cart-title">Tu pedido</h2>
+      <h2 id="cart-title" tabindex="-1">Tu pedido</h2>
       <fieldset class="order-mode"><legend>¿Cómo lo quieres?</legend><label><input type="radio" name="order-mode" value="Delivery" checked> Delivery</label><label><input type="radio" name="order-mode" value="Para llevar"> Para llevar</label><label><input type="radio" name="order-mode" value="En restaurante"> En restaurante</label></fieldset>
       <ul class="cart-list" id="cart-list"></ul>
       <p class="empty-cart" id="empty-cart">Tu pedido está vacío.</p>
