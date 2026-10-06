@@ -123,7 +123,22 @@
       <ul class="cart-list" id="cart-list"></ul>
       <p class="empty-cart" id="empty-cart">Tu pedido está vacío.</p>
       <div class="cart-total"><span>Total</span><strong id="cart-total">$0.00</strong></div>
-      <button class="button button-primary checkout-button" id="confirm-order" type="button">Confirmar pedido <span aria-hidden="true">↗</span></button>
+      <form class="checkout-form" id="checkout-form">
+        <div class="checkout-field">
+          <label for="customer-name">Nombre</label>
+          <input id="customer-name" name="name" type="text" autocomplete="name" minlength="2" maxlength="80" required>
+        </div>
+        <div class="checkout-field">
+          <label for="customer-phone">Teléfono</label>
+          <input id="customer-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" pattern="[0-9+() -]{7,20}" minlength="7" maxlength="20" required>
+        </div>
+        <div class="checkout-field">
+          <label for="customer-email">Correo electrónico</label>
+          <input id="customer-email" name="email" type="email" autocomplete="email" pattern="[A-Za-z0-9.!#$%&amp;'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+" required>
+          <small>Ingresa un correo válido, por ejemplo nombre@correo.com.</small>
+        </div>
+        <button class="button button-primary checkout-button" id="confirm-order" type="submit">Confirmar pedido <span aria-hidden="true">↗</span></button>
+      </form>
     </div>
   </div>
   <p class="sr-only" id="region-aria-live" aria-live="polite"></p>

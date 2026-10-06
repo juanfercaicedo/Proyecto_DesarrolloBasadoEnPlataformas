@@ -12,6 +12,8 @@
   const headerCartCount = document.querySelector("#header-cart-count");
   const themeToggle = document.querySelector("#theme-toggle");
   const themeToggleIcon = document.querySelector("#theme-toggle-icon");
+  const checkoutForm = document.querySelector("#checkout-form");
+  const customerEmail = document.querySelector("#customer-email");
   const categoryButtons = document.querySelectorAll(".category-tabs button");
   const productCards = document.querySelectorAll(".product-card");
   let previouslyFocusedElement;
@@ -353,7 +355,42 @@
     }
   });
 
-  document.querySelector("#confirm-order").addEventListener("click", () => {
+  const emailPattern = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/;
+
+  function validateEmail() {
+    const email = customerEmail.value.trim();
+    const isValid = emailPattern.test(email);
+    customerEmail.setCustomValidity(
+      email && !isValid ? "Ingresa un correo electrónico válido." : "",
+    );
+    return isValid;
+  }
+
+  customerEmail.addEventListener("input", validateEmail);
+
+  checkoutForm.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.isComposing) return;
+
+    const fields = [
+      document.querySelector("#customer-name"),
+      document.querySelector("#customer-phone"),
+      customerEmail,
+    ];
+    const currentIndex = fields.indexOf(event.target);
+    if (currentIndex < 0 || currentIndex === fields.length - 1) return;
+
+    event.preventDefault();
+    const currentField = fields[currentIndex];
+    if (!currentField.checkValidity()) {
+      currentField.reportValidity();
+      return;
+    }
+
+    fields[currentIndex + 1].focus();
+  });
+
+  checkoutForm.addEventListener("submit", (event) => {
+    event.preventDefault();
     const mode = document.querySelector(
       'input[name="order-mode"]:checked',
     ).value;
@@ -362,9 +399,15 @@
       return;
     }
 
-    liveRegion.textContent = `Pedido listo para ${mode}.`;
+    validateEmail();
+    if (!checkoutForm.reportValidity()) return;
+
+    const customerName = document.querySelector("#customer-name").value.trim();
+    const customerPhone = document.querySelector("#customer-phone").value.trim();
+    const email = customerEmail.value.trim();
+    liveRegion.textContent = `Gracias, ${customerName}. Pedido listo para ${mode}.`;
     window.alert(
-      `Pedido listo para ${mode}. Total: ${totalElement.textContent}`,
+      `Gracias, ${customerName}.\nPedido para ${mode}.\nTeléfono: ${customerPhone}\nCorreo: ${email}\nTotal: ${totalElement.textContent}`,
     );
   });
 
