@@ -15,8 +15,9 @@
   const checkoutForm = document.querySelector("#checkout-form");
   const customerEmail = document.querySelector("#customer-email");
   const customerPhone = document.querySelector("#customer-phone");
+  const productGrid = document.querySelector("#menu-products");
   const categoryButtons = document.querySelectorAll(".category-tabs button");
-  const productCards = document.querySelectorAll(".product-card");
+  let productCards = productGrid.querySelectorAll(".product-card");
   let previouslyFocusedElement;
 
   function updateThemeToggle(isDark) {
@@ -230,6 +231,71 @@
     }
   }
 
+  function renderProducts(products) {
+    productGrid.replaceChildren();
+
+    products.forEach((product, index) => {
+      const card = document.createElement("article");
+      card.className = `product-card${index === 0 ? " featured-card" : ""}`;
+      card.dataset.category = "hamburguesas";
+      card.dataset.product = product.name;
+      card.dataset.price = String(product.price);
+
+      const imageContainer = document.createElement("div");
+      imageContainer.className = "product-image";
+      const image = document.createElement("img");
+      image.src = product.image;
+      image.alt = product.imageAlt;
+      image.loading = "lazy";
+      image.decoding = "async";
+      const badge = document.createElement("span");
+      badge.className = `tag${product.badgeClass ? ` ${product.badgeClass}` : ""}`;
+      badge.textContent = product.badge;
+      imageContainer.append(image, badge);
+
+      const info = document.createElement("div");
+      info.className = "product-info";
+      const details = document.createElement("div");
+      const name = document.createElement("h3");
+      name.textContent = product.name;
+      const description = document.createElement("p");
+      description.textContent = product.description;
+      const price = document.createElement("strong");
+      price.className = "price";
+      price.textContent = formatPrice(product.price);
+      details.append(name, description);
+      info.append(details, price);
+
+      const addButton = document.createElement("button");
+      addButton.className = "add-button transition-colors duration-200 hover:bg-brasa";
+      addButton.type = "button";
+      addButton.setAttribute(
+        "aria-label",
+        `Personalizar y agregar ${product.name} al pedido`,
+      );
+      addButton.textContent = "+";
+
+      card.append(imageContainer, info, addButton);
+      productGrid.append(card);
+    });
+
+    productCards = productGrid.querySelectorAll(".product-card");
+  }
+
+  function isValidProduct(product) {
+    return Boolean(
+      product &&
+        typeof product.name === "string" &&
+        Number.isSafeInteger(product.price) &&
+        product.price >= 0 &&
+        typeof product.description === "string" &&
+        typeof product.image === "string" &&
+        typeof product.imageAlt === "string" &&
+        typeof product.badge === "string" &&
+        ["", "spicy", "veggie"].includes(product.badgeClass),
+    );
+  }
+
   function addProduct(card) {
     const name = card.dataset.product;
     const price = Number(card.dataset.price);
@@ -258,11 +324,11 @@
     openCart();
   }
 
-  document.querySelectorAll(".add-button").forEach((button) => {
-    button.addEventListener("click", () => {
-      const card = button.closest(".product-card");
-      if (card) addProduct(card);
-    });
+  productGrid.addEventListener("click", (event) => {
+    if (!(event.target instanceof Element)) return;
+    const button = event.target.closest(".add-button");
+    const card = button?.closest(".product-card");
+    if (card) addProduct(card);
   });
 
   categoryButtons.forEach((button) => {
@@ -428,6 +494,29 @@
     );
   });
 
-  cart.push(...restoreCart());
-  renderCart();
+  async function initializeProducts() {
+    try {
+      const response = await fetch("src/assets/data/hamburguesas.json");
+      if (!response.ok) {
+        throw new Error(`Error al cargar el catálogo: ${response.status}`);
+      }
+
+      const products = await response.json();
+      if (!Array.isArray(products) || !products.every(isValidProduct)) {
+        throw new Error("El catálogo de hamburguesas tiene un formato inválido.");
+      }
+
+      renderProducts(products);
+      cart.push(...restoreCart());
+      renderCart();
+    } catch (error) {
+      console.error("No se pudo cargar el catálogo de hamburguesas.", error);
+      emptyCategoryStatus.hidden = false;
+      emptyCategoryStatus.textContent =
+        "No fue posible cargar las hamburguesas. Recarga la página para intentarlo de nuevo.";
+      liveRegion.textContent = emptyCategoryStatus.textContent;
+    }
+  }
+
+  initializeProducts();
 })();

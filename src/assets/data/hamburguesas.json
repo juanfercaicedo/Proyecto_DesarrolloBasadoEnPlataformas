@@ -1,0 +1,29 @@
+[
+  {
+    "name": "La Brasa",
+    "price": 1299,
+    "description": "Doble carne, cheddar, cebolla crispy y salsa BV.",
+    "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=85",
+    "imageAlt": "Hamburguesa Brasa Viva con doble queso",
+    "badge": "Más pedida",
+    "badgeClass": ""
+  },
+  {
+    "name": "La Fuego",
+    "price": 1350,
+    "description": "Carne, pepper jack, jalapeños y mayo ahumada.",
+    "image": "https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?auto=format&fit=crop&w=800&q=85",
+    "imageAlt": "Hamburguesa picante con jalapeños",
+    "badge": "Picante",
+    "badgeClass": "spicy"
+  },
+  {
+    "name": "La Verde",
+    "price": 1199,
+    "description": "Portobello, provolone, rúcula y pesto de la casa.",
+    "image": "https://images.unsplash.com/photo-1520072959219-c595dc870360?auto=format&fit=crop&w=800&q=85",
+    "imageAlt": "Hamburguesa vegetariana con vegetales frescos",
+    "badge": "Veggie",
+    "badgeClass": "veggie"
+  }
+]
