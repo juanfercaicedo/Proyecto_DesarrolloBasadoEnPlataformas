@@ -29,9 +29,15 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Preparar archivos del sitio
+        run: |
+          mkdir -p _site/src
+          cp -R src/. _site/
+          cp -R src/. _site/src/
+
+      - name: Cargar archivos del sitio
         uses: actions/upload-pages-artifact@v3
         with:
-          path: src
+          path: _site
 
       - name: Publicar sitio
         id: deployment
