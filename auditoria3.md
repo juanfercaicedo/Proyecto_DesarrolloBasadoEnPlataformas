@@ -12,80 +12,108 @@ Se solicitó una segunda opinión al modelo local `llama3.1:8b` mediante Ollama.
 
 Las proporciones de contraste se calcularon con la fórmula WCAG para luminancia relativa. Son valores del estado encontrado antes de aplicar las correcciones.
 
+## Clasificación de prioridad
+
+- **Crítica:** impide una función esencial o expone a usuarios/datos a un riesgo grave. No se encontraron hallazgos confirmados de esta prioridad.
+- **Leve:** afecta accesibilidad o claridad de uso, pero existe una alternativa para completar la tarea.
+- **Baja:** mejora de calidad o rendimiento sin bloquear el uso normal.
+
+| Prioridad | Cantidad | Hallazgos |
+| --- | ---: | --- |
+| Crítica | 0 | Ninguno confirmado |
+| Leve | 3 | Contraste, estado vacío de categorías, foco del carrito |
+| Baja | 2 | Enlace de ubicación, carga de recursos |
+
 ## Hallazgos confirmados y solución
 
-### 1. Contraste insuficiente en varios textos — Alta
+### 1. Contraste insuficiente en varios textos
 
 **Ubicación:** `src/styles.css`, variables y reglas de color (aprox. líneas 5, 31, 40, 78 y 88).
+
+**Prioridad del hallazgo:** Leve.
+
+**Estado:** Corregido.
 
 **Evidencia:** el rojo `#e3482e` se usa como texto sobre el fondo `#fffdf8` y como fondo con texto blanco; sus contrastes son, respectivamente, **3.95:1** y **4.01:1**. Ambos son inferiores al mínimo **4.5:1** de WCAG AA para texto normal. En el banner promocional, el amarillo `#f6bb3e` sobre rojo `#e3482e` alcanza solo **2.31:1**; también falla para el texto pequeño del rótulo. El mismo rojo como texto hover en el footer, sobre `#1e1e1b`, alcanza solo **4.16:1**.
 
 **Impacto:** parte de los textos pequeños puede resultar difícil de leer para personas con baja visión o en pantallas con reflejos.
 
-**Cómo solucionarlo:**
+**Solución aplicada — prioridad leve:**
 
-1. Oscurecer el color de marca para que el texto blanco sobre rojo y el texto rojo sobre papel alcancen al menos 4.5:1.
-2. Cambiar el rótulo pequeño amarillo del banner por un color claro que alcance 4.5:1 sobre el nuevo fondo.
-3. Mantener el amarillo en el título grande solo si su contraste alcanza el mínimo de 3:1 aplicable a texto grande.
-4. Verificar los estados normales y hover de botones, etiquetas y enlaces con un comprobador de contraste; el footer necesita un par de colores distinto por su fondo oscuro.
+1. Se oscureció el rojo de marca y se verificaron sus contrastes con texto blanco y con el fondo papel.
+2. Se cambió el texto pequeño promocional a color papel y se conservó el amarillo únicamente para el texto grande cuyo contraste supera 3:1.
+3. Se asignó amarillo al hover de los enlaces del footer para distinguir su tratamiento sobre fondo oscuro; se verificaron los pares de contraste afectados.
 
-### 2. Filtros que muestran una categoría vacía sin explicarlo — Media
+### 2. Filtros que muestran una categoría vacía sin explicarlo
 
 **Ubicación:** `src/index.html` (aprox. líneas 64–68 y 72–84), `src/script.js` (manejador de categorías).
+
+**Prioridad del hallazgo:** Leve.
+
+**Estado:** Corregido.
 
 **Evidencia:** hay filtros para hamburguesas, acompañamientos, bebidas y postres, pero las tres tarjetas disponibles tienen `data-category="hamburguesas"`. Al elegir cualquiera de las otras categorías, el script oculta todas las tarjetas; no presenta un mensaje de estado vacío.
 
 **Impacto:** parece que el filtro o el menú no cargó, y no se informa que esas categorías todavía no tienen productos.
 
-**Cómo solucionarlo:**
+**Solución aplicada — prioridad leve:**
 
-1. Conservar los filtros y detectar si la categoría seleccionada tiene productos visibles.
-2. Cuando no haya resultados, mostrar un mensaje visible y accesible —por ejemplo, “Aún no hay productos en esta categoría”— mediante una región `role="status"` o equivalente.
-3. Ocultar ese mensaje cuando se seleccione una categoría con productos.
-4. Comprobar con teclado y lector de pantalla que se anuncie el cambio.
+1. Se conservaron los filtros y se añadió una región `role="status"` que muestra “Aún no hay productos en esta categoría” si la selección no tiene artículos.
+2. La región se oculta cuando se elige una categoría con productos y el cambio se anuncia mediante la región viva existente.
+3. Se comprobó en navegador el estado vacío y la restauración de los productos al volver a “Hamburguesas”.
 
-### 3. Enlace de ubicación con destino inexistente — Media
+### 3. Enlace de ubicación con destino inexistente
 
 **Ubicación:** `src/index.html` (aprox. línea 98).
+
+**Prioridad del hallazgo:** Baja.
+
+**Estado:** Corregido.
 
 **Evidencia:** el enlace “Cómo llegar” apunta a `#como-llegar`, pero no hay ningún elemento con `id="como-llegar"` en el documento.
 
 **Impacto:** al activarlo no se abre una ruta ni se lleva al usuario a información de cómo llegar.
 
-**Cómo solucionarlo:**
+**Solución aplicada — prioridad baja:**
 
-1. Reemplazar el fragmento inexistente por un enlace de búsqueda de Google Maps que use la dirección que ya aparece en la tarjeta (`Cra. 7 # 72-41, Bogotá`).
-2. Si el enlace abre una pestaña nueva, indicar ese comportamiento de forma accesible y añadir `rel="noreferrer"`.
-3. Verificar que el destino se abra correctamente.
+1. Se reemplazó el fragmento roto con una búsqueda de Google Maps que utiliza la dirección ya mostrada en la tarjeta.
+2. El enlace permanece en la misma pestaña; su nombre accesible identifica Google Maps y la dirección.
 
-### 4. El foco del teclado se pierde al cambiar una cantidad del pedido — Media
+### 4. El foco del teclado se pierde al cambiar una cantidad del pedido
 
 **Ubicación:** `src/script.js`, controlador de clics de `cartList` y llamada a `renderCart()` (aprox. líneas 124–140).
+
+**Prioridad del hallazgo:** Leve.
+
+**Estado:** Corregido.
 
 **Evidencia:** al pulsar `+` o `−`, el script vuelve a crear todos los elementos de `cartList` con `replaceChildren()`. Eso elimina el botón que tenía el foco; el código no restaura el foco ni actualiza `region-aria-live` para anunciar el nuevo estado.
 
 **Impacto:** quien use teclado o lector de pantalla puede perder la posición de navegación y no saber si cambió la cantidad o el total.
 
-**Cómo solucionarlo:**
+**Solución aplicada — prioridad leve:**
 
-1. Antes de volver a renderizar, guardar la acción realizada y el artículo afectado.
-2. Después de renderizar, devolver el foco al control equivalente; si el artículo se eliminó, moverlo a un control lógico cercano o al encabezado del panel.
-3. Actualizar la región de estado accesible para anunciar el cambio de cantidad, eliminación y total.
-4. Probar incremento, decremento hasta cero y navegación con Tab/Mayús+Tab.
+1. Se guarda la acción y el artículo antes del renderizado; después, el foco vuelve al botón equivalente.
+2. Si se elimina el artículo, el foco pasa a un control cercano o al título enfocable del pedido.
+3. Se anuncian la cantidad, la eliminación y el total. El incremento, decremento y eliminación del último artículo se probaron en navegador.
 
-### 5. Recursos secundarios sin carga diferida y conexión repetida — Baja
+### 5. Recursos secundarios sin carga diferida y conexión repetida
 
 **Ubicación:** `src/index.html` (aprox. líneas 9–10 y 43, 73, 78, 83, 92).
+
+**Prioridad del hallazgo:** Baja.
+
+**Estado:** Corregido.
 
 **Evidencia:** hay dos enlaces idénticos `preconnect` a `fonts.gstatic.com`. Las imágenes del menú y de la promoción no especifican `loading="lazy"` ni `decoding="async"`.
 
 **Impacto:** la conexión preestablecida está duplicada sin beneficio, y el navegador puede descargar imágenes fuera de la primera vista antes de que sean necesarias.
 
-**Cómo solucionarlo:**
+**Solución aplicada — prioridad baja:**
 
-1. Eliminar uno de los `preconnect` duplicados.
-2. Añadir `loading="lazy"` y `decoding="async"` a las imágenes secundarias del menú y la promoción.
-3. Mantener la imagen principal del hero sin carga diferida para no retrasar el contenido inicial.
+1. Se eliminó el `preconnect` duplicado.
+2. Se añadió `loading="lazy"` y `decoding="async"` a las imágenes secundarias del menú y de la promoción.
+3. La imagen principal del hero conserva su carga inicial para no retrasar el contenido principal.
 
 ## Hallazgos no confirmados / aspectos correctos
 
