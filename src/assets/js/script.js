@@ -14,6 +14,7 @@
   const themeToggleIcon = document.querySelector("#theme-toggle-icon");
   const checkoutForm = document.querySelector("#checkout-form");
   const customerEmail = document.querySelector("#customer-email");
+  const customerPhone = document.querySelector("#customer-phone");
   const categoryButtons = document.querySelectorAll(".category-tabs button");
   const productCards = document.querySelectorAll(".product-card");
   let previouslyFocusedElement;
@@ -368,12 +369,27 @@
 
   customerEmail.addEventListener("input", validateEmail);
 
+  const phonePattern = /^[0-9]{7,15}$/;
+
+  function validatePhone() {
+    const phone = customerPhone.value;
+    const isValid = phonePattern.test(phone);
+    customerPhone.setCustomValidity(
+      phone && !isValid
+        ? "Ingresa entre 7 y 15 dígitos, sin espacios ni símbolos."
+        : "",
+    );
+    return isValid;
+  }
+
+  customerPhone.addEventListener("input", validatePhone);
+
   checkoutForm.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" || event.isComposing) return;
 
     const fields = [
       document.querySelector("#customer-name"),
-      document.querySelector("#customer-phone"),
+      customerPhone,
       customerEmail,
     ];
     const currentIndex = fields.indexOf(event.target);
@@ -400,14 +416,15 @@
     }
 
     validateEmail();
+    validatePhone();
     if (!checkoutForm.reportValidity()) return;
 
     const customerName = document.querySelector("#customer-name").value.trim();
-    const customerPhone = document.querySelector("#customer-phone").value.trim();
+    const phone = customerPhone.value;
     const email = customerEmail.value.trim();
     liveRegion.textContent = `Gracias, ${customerName}. Pedido listo para ${mode}.`;
     window.alert(
-      `Gracias, ${customerName}.\nPedido para ${mode}.\nTeléfono: ${customerPhone}\nCorreo: ${email}\nTotal: ${totalElement.textContent}`,
+      `Gracias, ${customerName}.\nPedido para ${mode}.\nTeléfono: ${phone}\nCorreo: ${email}\nTotal: ${totalElement.textContent}`,
     );
   });
 
