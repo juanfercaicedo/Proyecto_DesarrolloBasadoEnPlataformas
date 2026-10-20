@@ -520,3 +520,54 @@
 
   initializeProducts();
 })();
+
+
+/**
+ * Función para descontar el inventario físico basado en la receta de cada producto
+ * Se ejecuta cuando un pedido es pagado.
+ */
+async function descontarInventarioPorPedido(id_pedido) {
+    try {
+        // 1. Obtener los productos del pedido
+        const detalles = await db.query(
+            `SELECT id_producto, cantidad FROM DETALLE_PEDIDO WHERE id_pedido = ?`, 
+            [id_pedido]
+        );
+
+        // 2. Recorrer cada producto
+        for (const detalle of detalles) {
+            // 3. Obtener la receta del producto
+            const receta = await db.query(
+                `SELECT id_ingrediente, cantidad_necesaria 
+                 FROM RECETA WHERE id_producto = ?`, 
+                [detalle.id_producto]
+            );
+
+            // 4. Recorrer ingredientes y descontar
+            for (const ingrediente of receta) {
+                const cantidadTotalUsada = ingrediente.cantidad_necesaria * detalle.cantidad;
+
+                // 5. Actualizar el inventario
+                await db.query(
+                    `UPDATE INGREDIENTE 
+                     SET stock_actual = stock_actual - ? 
+                     WHERE id_ingrediente = ?`,
+                    [cantidadTotalUsada, ingrediente.id_ingrediente]
+                );
+
+                // 6. Alerta de stock mínimo
+                const infoStock = await db.query(
+                    `SELECT stock_actual, stock_minimo, nombre FROM INGREDIENTE WHERE id_ingrediente = ?`,
+                    [ingrediente.id_ingrediente]
+                );
+                
+                if(infoStock[0].stock_actual <= infoStock[0].stock_minimo) {
+                    console.warn(`Alerta: El ingrediente ${infoStock[0].nombre} está en nivel mínimo o inferior.`);
+                }
+            }
+        }
+        console.log("Inventario rebajado correctamente.");
+    } catch (error) {
+        console.error("Error al actualizar inventario: ", error);
+    }
+}
