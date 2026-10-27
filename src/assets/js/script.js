@@ -1,6 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 const supabase = createClient(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_ANON_KEY);
 
+async function probarConexion() {
+  const { data, error } = await supabase.from('ROL').select('*');
+  
+  if (error) {
+    console.error("Error en la conexión:", error.message);
+  } else {
+    console.log("¡Conexión exitosa! Datos recibidos:", data);
+  }
+}
+
+probarConexion();
+
 (() => {
   const cart = [];
   const drawer = document.querySelector("#order-drawer");
