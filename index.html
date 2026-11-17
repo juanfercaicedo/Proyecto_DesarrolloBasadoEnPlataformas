@@ -116,6 +116,10 @@
           <label for="customer-phone">Teléfono</label>
           <input id="customer-phone" name="phone" type="tel" autocomplete="tel" inputmode="numeric" pattern="[0-9]{7,15}" minlength="7" maxlength="15" required>
         </div>
+        <div class="checkout-field" id="delivery-address-field" hidden>
+          <label for="delivery-address">Dirección de entrega</label>
+          <input id="delivery-address" name="address" type="text" autocomplete="street-address" maxlength="255">
+        </div>
         <div class="checkout-field">
           <label for="customer-email">Correo electrónico</label>
           <input id="customer-email" name="email" type="email" autocomplete="email" pattern="[A-Za-z0-9.!#$%&amp;'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+" required>

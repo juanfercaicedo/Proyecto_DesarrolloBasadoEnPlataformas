@@ -1,18 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-const supabase = createClient(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_ANON_KEY);
-
-async function probarConexion() {
-  const { data, error } = await supabase.from('ROL').select('*');
-  
-  if (error) {
-    console.error("Error en la conexión:", error.message);
-  } else {
-    console.log("¡Conexión exitosa! Datos recibidos:", data);
-  }
-}
-
-probarConexion();
-
 (() => {
   const cart = [];
   const drawer = document.querySelector("#order-drawer");
@@ -30,6 +15,8 @@ probarConexion();
   const checkoutForm = document.querySelector("#checkout-form");
   const customerEmail = document.querySelector("#customer-email");
   const customerPhone = document.querySelector("#customer-phone");
+  const deliveryAddress = document.querySelector("#delivery-address");
+  const deliveryAddressField = document.querySelector("#delivery-address-field");
   const productGrid = document.querySelector("#menu-products");
   const categoryButtons = document.querySelectorAll(".category-tabs button");
   let productCards = productGrid.querySelectorAll(".product-card");
@@ -465,12 +452,26 @@ probarConexion();
 
   customerPhone.addEventListener("input", validatePhone);
 
+  function updateDeliveryAddress() {
+    const isDelivery = document.querySelector(
+      'input[name="order-mode"]:checked',
+    ).value === "Delivery";
+    deliveryAddressField.hidden = !isDelivery;
+    deliveryAddress.required = isDelivery;
+  }
+
+  document.querySelectorAll('input[name="order-mode"]').forEach((input) => {
+    input.addEventListener("change", updateDeliveryAddress);
+  });
+  updateDeliveryAddress();
+
   checkoutForm.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" || event.isComposing) return;
 
     const fields = [
       document.querySelector("#customer-name"),
       customerPhone,
+      ...(deliveryAddress.required ? [deliveryAddress] : []),
       customerEmail,
     ];
     const currentIndex = fields.indexOf(event.target);
@@ -486,7 +487,7 @@ probarConexion();
     fields[currentIndex + 1].focus();
   });
 
-  checkoutForm.addEventListener("submit", (event) => {
+  checkoutForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const mode = document.querySelector(
       'input[name="order-mode"]:checked',
@@ -503,20 +504,56 @@ probarConexion();
     const customerName = document.querySelector("#customer-name").value.trim();
     const phone = customerPhone.value;
     const email = customerEmail.value.trim();
-    liveRegion.textContent = `Gracias, ${customerName}. Pedido listo para ${mode}.`;
-    window.alert(
-      `Gracias, ${customerName}.\nPedido para ${mode}.\nTeléfono: ${phone}\nCorreo: ${email}\nTotal: ${totalElement.textContent}`,
-    );
+    const submitButton = document.querySelector("#confirm-order");
+    submitButton.disabled = true;
+    liveRegion.textContent = "Enviando tu pedido.";
+
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer: { name: customerName, phone, email },
+          mode,
+          address: deliveryAddress.value,
+          items: cart.map(({ name, quantity, extra }) => ({
+            name,
+            quantity,
+            extra,
+          })),
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error ?? "No fue posible registrar el pedido.");
+      }
+
+      cart.splice(0, cart.length);
+      renderCart();
+      const saved = saveCart();
+      checkoutForm.reset();
+      updateDeliveryAddress();
+      liveRegion.textContent = `Pedido ${result.order.id} recibido. Total ${formatPrice(result.order.total)}.`;
+      window.alert(
+        `Gracias, ${customerName}.\nPedido recibido para ${mode}.\nCódigo: ${result.order.id}\nTotal: ${formatPrice(result.order.total)}${saved ? "" : "\nNo se pudo actualizar el carrito guardado."}`,
+      );
+    } catch (error) {
+      liveRegion.textContent = error.message;
+      window.alert(error.message);
+    } finally {
+      submitButton.disabled = false;
+    }
   });
 
   async function initializeProducts() {
     try {
-      const response = await fetch("src/assets/data/hamburguesas.json");
+      const response = await fetch("/api/products");
       if (!response.ok) {
         throw new Error(`Error al cargar el catálogo: ${response.status}`);
       }
 
-      const products = await response.json();
+      const result = await response.json();
+      const products = result.products;
       if (!Array.isArray(products) || !products.every(isValidProduct)) {
         throw new Error("El catálogo de hamburguesas tiene un formato inválido.");
       }
@@ -535,54 +572,3 @@ probarConexion();
 
   initializeProducts();
 })();
-
-
-/**
- * Función para descontar el inventario físico basado en la receta de cada producto
- * Se ejecuta cuando un pedido es pagado.
- */
-async function descontarInventarioPorPedido(id_pedido) {
-    try {
-        // 1. Obtener los productos del pedido
-        const detalles = await db.query(
-            `SELECT id_producto, cantidad FROM DETALLE_PEDIDO WHERE id_pedido = ?`, 
-            [id_pedido]
-        );
-
-        // 2. Recorrer cada producto
-        for (const detalle of detalles) {
-            // 3. Obtener la receta del producto
-            const receta = await db.query(
-                `SELECT id_ingrediente, cantidad_necesaria 
-                 FROM RECETA WHERE id_producto = ?`, 
-                [detalle.id_producto]
-            );
-
-            // 4. Recorrer ingredientes y descontar
-            for (const ingrediente of receta) {
-                const cantidadTotalUsada = ingrediente.cantidad_necesaria * detalle.cantidad;
-
-                // 5. Actualizar el inventario
-                await db.query(
-                    `UPDATE INGREDIENTE 
-                     SET stock_actual = stock_actual - ? 
-                     WHERE id_ingrediente = ?`,
-                    [cantidadTotalUsada, ingrediente.id_ingrediente]
-                );
-
-                // 6. Alerta de stock mínimo
-                const infoStock = await db.query(
-                    `SELECT stock_actual, stock_minimo, nombre FROM INGREDIENTE WHERE id_ingrediente = ?`,
-                    [ingrediente.id_ingrediente]
-                );
-                
-                if(infoStock[0].stock_actual <= infoStock[0].stock_minimo) {
-                    console.warn(`Alerta: El ingrediente ${infoStock[0].nombre} está en nivel mínimo o inferior.`);
-                }
-            }
-        }
-        console.log("Inventario rebajado correctamente.");
-    } catch (error) {
-        console.error("Error al actualizar inventario: ", error);
-    }
-}

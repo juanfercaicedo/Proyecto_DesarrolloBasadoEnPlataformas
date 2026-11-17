@@ -1,1 +1,5 @@
 .env
+node_modules/
+src/backend/data/orders.json
+prisma/*.db
+prisma/*.db-journal
