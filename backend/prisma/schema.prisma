@@ -39,6 +39,33 @@ model Usuario {
   @@map("USUARIO")
 }
 
+model CuentaCliente {
+  id_cuenta_cliente Int                @id @default(autoincrement())
+  nombres           String             @db.VarChar(100)
+  apellidos         String             @db.VarChar(100)
+  correo            String             @unique @db.VarChar(254)
+  contrasena_hash   String             @db.VarChar(255)
+  telefono          String             @db.VarChar(20)
+  fecha_creacion    DateTime           @default(now()) @db.Timestamp(0)
+  pedidos           Pedido[]
+  direcciones       DireccionCliente[]
+
+  @@map("CUENTA_CLIENTE")
+}
+
+model DireccionCliente {
+  id_direccion_cliente Int           @id @default(autoincrement())
+  id_cuenta_cliente    Int
+  etiqueta             String        @db.VarChar(40)
+  direccion            String        @db.VarChar(255)
+  referencia           String?       @db.VarChar(180)
+  fecha_creacion       DateTime      @default(now()) @db.Timestamp(0)
+  cuenta               CuentaCliente @relation(fields: [id_cuenta_cliente], references: [id_cuenta_cliente], onDelete: Cascade)
+
+  @@index([id_cuenta_cliente, fecha_creacion])
+  @@map("DIRECCION_CLIENTE")
+}
+
 model CategoriaProducto {
   id_categoria     Int        @id @default(autoincrement())
   nombre_categoria String     @unique @db.VarChar(80)
@@ -160,12 +187,14 @@ model EstadoPedido {
 model Pedido {
   id_pedido         Int             @id @default(autoincrement())
   id_usuario        Int
+  id_cuenta_cliente Int?
   id_tipo_pedido    Int
   id_estado_pedido  Int
   fecha_hora        DateTime        @default(now()) @db.Timestamp(0)
   total             Decimal         @db.Decimal(10, 2)
   direccion_entrega String?         @db.VarChar(255)
   cliente           Usuario         @relation(fields: [id_usuario], references: [id_usuario])
+  cuentaCliente     CuentaCliente?  @relation(fields: [id_cuenta_cliente], references: [id_cuenta_cliente], onDelete: SetNull)
   tipo              TipoPedido      @relation(fields: [id_tipo_pedido], references: [id_tipo_pedido])
   estado            EstadoPedido    @relation(fields: [id_estado_pedido], references: [id_estado_pedido])
   detalles          DetallePedido[]
@@ -174,6 +203,7 @@ model Pedido {
   ordenSalida       OrdenSalida?
 
   @@index([id_usuario])
+  @@index([id_cuenta_cliente, fecha_hora])
   @@index([id_tipo_pedido])
   @@index([id_estado_pedido])
   @@index([fecha_hora])

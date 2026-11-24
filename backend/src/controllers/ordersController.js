@@ -8,7 +8,7 @@ export const ordersController = {
   ...resourceController,
   checkout: async (request, response, next) => {
     try {
-      const order = await createOrder(request.body);
+      const order = await createOrder(request.body, request.customerSession);
       response.status(201).json({ message: "Pedido recibido.", order });
     } catch (error) {
       next(error);

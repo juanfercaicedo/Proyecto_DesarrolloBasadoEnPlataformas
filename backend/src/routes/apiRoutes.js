@@ -21,6 +21,8 @@ import { requireAdminKey } from "../middlewares/requireAdminKey.js";
 import { adminSessionController } from "../controllers/adminSessionController.js";
 import { supplierOrdersController } from "../controllers/supplierOrdersController.js";
 import { suppliersController } from "../controllers/suppliersController.js";
+import { customerController } from "../controllers/customerController.js";
+import { optionalCustomerSession, requireCustomerSession } from "../middlewares/customerSession.js";
 
 export const apiRouter = Router();
 
@@ -37,8 +39,16 @@ apiRouter.get("/health", (_request, response) => {
 });
 apiRouter.post("/admin/session", adminSessionController.create);
 apiRouter.get("/admin/session", requireAdminKey, adminSessionController.current);
+apiRouter.post("/customer/register", customerController.register);
+apiRouter.post("/customer/session", customerController.login);
+apiRouter.get("/customer/session", requireCustomerSession, customerController.currentSession);
+apiRouter.get("/customer/addresses", requireCustomerSession, customerController.listAddresses);
+apiRouter.post("/customer/addresses", requireCustomerSession, customerController.createAddress);
+apiRouter.patch("/customer/addresses/:id", requireCustomerSession, customerController.updateAddress);
+apiRouter.delete("/customer/addresses/:id", requireCustomerSession, customerController.deleteAddress);
+apiRouter.get("/customer/orders", requireCustomerSession, customerController.listOrders);
 apiRouter.get("/products", productsController.listPublic);
-apiRouter.post("/orders", ordersController.checkout);
+apiRouter.post("/orders", optionalCustomerSession, ordersController.checkout);
 apiRouter.get("/sales/summary", requireAdminKey, salesController.summary);
 apiRouter.get("/sales", requireAdminKey, salesController.list);
 apiRouter.get("/inventory/low-stock", requireAdminKey, inventoryController.lowStock);

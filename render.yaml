@@ -21,6 +21,8 @@ services:
         generateValue: true
       - key: ADMIN_EMAIL
         value: admin@brasaviva.local
+      - key: CUSTOMER_SESSION_SECRET
+        generateValue: true
 
 databases:
   - name: brasa-viva-db

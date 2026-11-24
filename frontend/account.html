@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Administra tu cuenta de Brasa Viva, tus direcciones frecuentes y tus pedidos anteriores.">
+  <title>Mi cuenta | Brasa Viva</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="src/assets/css/styles.css">
+  <link rel="stylesheet" href="src/assets/css/account.css">
+</head>
+<body class="account-body">
+  <header class="site-header account-header">
+    <a class="brand" href="index.html" aria-label="Brasa Viva, inicio">
+      <span class="brand-mark">BV</span>
+      <span>Brasa <strong>Viva</strong></span>
+    </a>
+    <a class="header-account-link" href="index.html#menu">Volver al menú <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main class="account-main">
+    <section class="account-intro">
+      <p class="eyebrow">Brasa Viva</p>
+      <h1>Tu cuenta,<br><em>tu pedido.</em></h1>
+      <p>Guarda tus direcciones frecuentes y consulta tus compras hechas con tu cuenta.</p>
+    </section>
+
+    <section id="auth-view" class="account-auth-grid" aria-label="Iniciar sesión o crear cuenta">
+      <form class="account-card account-form" id="login-form">
+        <p class="eyebrow">Bienvenido de vuelta</p>
+        <h2>Iniciar sesión</h2>
+        <label for="login-email">Correo electrónico</label>
+        <input id="login-email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <label for="login-password">Contraseña</label>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" maxlength="72" required>
+        <p class="form-message" id="login-message" role="status" aria-live="polite"></p>
+        <button class="button button-primary" type="submit">Entrar <span aria-hidden="true">↗</span></button>
+      </form>
+
+      <form class="account-card account-form" id="register-form">
+        <p class="eyebrow">Para tus próximas compras</p>
+        <h2>Crear cuenta</h2>
+        <label for="register-name">Nombres</label>
+        <input id="register-name" name="name" type="text" autocomplete="given-name" minlength="2" maxlength="100" required>
+        <label for="register-surname">Apellidos</label>
+        <input id="register-surname" name="surname" type="text" autocomplete="family-name" minlength="2" maxlength="100" required>
+        <label for="register-email">Correo electrónico</label>
+        <input id="register-email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <label for="register-phone">Teléfono</label>
+        <input id="register-phone" name="phone" type="tel" autocomplete="tel" inputmode="numeric" pattern="[0-9]{7,15}" minlength="7" maxlength="15" required>
+        <label for="register-password">Contraseña</label>
+        <input id="register-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="72" required>
+        <small>Usa al menos 12 caracteres.</small>
+        <p class="form-message" id="register-message" role="status" aria-live="polite"></p>
+        <button class="button button-primary" type="submit">Crear cuenta <span aria-hidden="true">↗</span></button>
+      </form>
+    </section>
+
+    <section id="account-view" class="account-dashboard" hidden>
+      <div class="account-welcome">
+        <div>
+          <p class="eyebrow">Tu perfil</p>
+          <h2>Hola, <span id="account-name"></span></h2>
+          <p id="account-email"></p>
+        </div>
+        <button class="account-secondary-button" id="logout-button" type="button">Cerrar sesión</button>
+      </div>
+
+      <div class="account-dashboard-grid">
+        <section class="account-card">
+          <p class="eyebrow">Para llegar más rápido</p>
+          <h2>Direcciones frecuentes</h2>
+          <form class="account-form address-form" id="address-form">
+            <label for="address-label">Nombre</label>
+            <input id="address-label" name="label" type="text" minlength="2" maxlength="40" placeholder="Casa, trabajo..." required>
+            <label for="address-value">Dirección</label>
+            <input id="address-value" name="address" type="text" autocomplete="street-address" minlength="5" maxlength="255" required>
+            <label for="address-reference">Referencia (opcional)</label>
+            <input id="address-reference" name="reference" type="text" maxlength="180">
+            <p class="form-message" id="address-message" role="status" aria-live="polite"></p>
+            <div class="account-form-actions">
+              <button class="button button-primary" id="save-address-button" type="submit">Agregar dirección</button>
+              <button class="account-secondary-button" id="cancel-address-edit" type="button" hidden>Cancelar</button>
+            </div>
+          </form>
+          <ul class="address-list" id="address-list" aria-live="polite"></ul>
+        </section>
+
+        <section class="account-card account-orders">
+          <p class="eyebrow">Tus compras</p>
+          <h2>Pedidos anteriores</h2>
+          <div id="order-list" class="customer-order-list" aria-live="polite"></div>
+        </section>
+      </div>
+      <p class="form-message account-global-message" id="account-message" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer class="account-footer">
+    <a class="brand" href="index.html"><span class="brand-mark">BV</span><span>Brasa <strong>Viva</strong></span></a>
+    <a href="index.html#menu">Volver a comprar</a>
+  </footer>
+  <script src="src/assets/js/config.js"></script>
+  <script src="src/assets/js/account.js" defer></script>
+</body>
+</html>

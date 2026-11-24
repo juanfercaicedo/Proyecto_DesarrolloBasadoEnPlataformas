@@ -106,8 +106,14 @@ h2 { font-size: clamp(3rem, 5vw, 5rem); line-height: .9; margin-bottom: 0; }
 .checkout-field { display: grid; gap: 7px; margin-top: 16px; }
 .checkout-field label { font-size: .76rem; font-weight: 700; }
 .checkout-field input { background: var(--paper); border: 1px solid var(--line); border-radius: 0; color: var(--ink); font: inherit; min-height: 46px; padding: 10px 12px; width: 100%; }
+.checkout-field select { background: var(--paper); border: 1px solid var(--line); color: var(--ink); font: inherit; min-height: 46px; padding: 10px 12px; width: 100%; }
 .checkout-field input:focus-visible { border-color: var(--red); }
 .checkout-field small { color: #777169; font-size: .68rem; line-height: 1.45; }
+.save-address-option { display: grid; gap: 10px; }
+.save-address-option label { align-items: center; display: flex; font-size: .72rem; gap: 8px; }
+.save-address-option input[type="checkbox"] { min-height: 0; width: auto; }
+.checkout-account-link { font-size: .72rem; line-height: 1.5; margin: 18px 0 0; }
+.checkout-account-link a { border-bottom: 1px solid var(--red); color: var(--red); }
 
 :focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
 

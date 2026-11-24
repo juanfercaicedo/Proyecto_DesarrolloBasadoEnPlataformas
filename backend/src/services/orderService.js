@@ -62,29 +62,51 @@ export async function consumeIngredientStock(transaction, requirements, today = 
   }
 }
 
-function validatePayload(payload) {
+function validatePayload(payload, customerSession) {
   if (!payload || typeof payload !== "object") {
     throw new AppError(400, "El cuerpo del pedido no es válido.");
   }
-  const customer = payload.customer;
-  if (!customer || typeof customer.name !== "string" || customer.name.trim().length < 2 || customer.name.trim().length > 100) {
-    throw new AppError(400, "El nombre debe tener entre 2 y 100 caracteres.");
-  }
-  if (typeof customer.phone !== "string" || !phonePattern.test(customer.phone)) {
-    throw new AppError(400, "El teléfono debe contener entre 7 y 15 dígitos.");
-  }
-  if (typeof customer.email !== "string" || customer.email.length > 254 || !emailPattern.test(customer.email)) {
-    throw new AppError(400, "Ingresa un correo electrónico válido.");
+  if (!customerSession) {
+    const customer = payload.customer;
+    if (!customer || typeof customer.name !== "string" || customer.name.trim().length < 2 || customer.name.trim().length > 100) {
+      throw new AppError(400, "El nombre debe tener entre 2 y 100 caracteres.");
+    }
+    if (typeof customer.phone !== "string" || !phonePattern.test(customer.phone)) {
+      throw new AppError(400, "El teléfono debe contener entre 7 y 15 dígitos.");
+    }
+    if (typeof customer.email !== "string" || customer.email.length > 254 || !emailPattern.test(customer.email)) {
+      throw new AppError(400, "Ingresa un correo electrónico válido.");
+    }
   }
   if (!orderModes.has(payload.mode)) {
     throw new AppError(400, "El tipo de pedido no es válido.");
   }
-  if (payload.mode === "Delivery" && (
-    typeof payload.address !== "string" ||
-    payload.address.trim().length < 5 ||
-    payload.address.trim().length > 255
-  )) {
-    throw new AppError(400, "La dirección es obligatoria para pedidos a domicilio y debe tener entre 5 y 255 caracteres.");
+  if (payload.mode === "Delivery") {
+    const hasSavedAddress = customerSession &&
+      Number.isSafeInteger(payload.addressId) &&
+      payload.addressId > 0;
+    const hasNewAddress = typeof payload.address === "string" &&
+      payload.address.trim().length >= 5 &&
+      payload.address.trim().length <= 255;
+    if (payload.addressId !== undefined && !hasSavedAddress) {
+      throw new AppError(400, "El identificador de dirección no es válido.");
+    }
+    if (!hasSavedAddress && !hasNewAddress) {
+      throw new AppError(400, "La dirección es obligatoria para pedidos a domicilio y debe tener entre 5 y 255 caracteres.");
+    }
+    if (payload.saveAddress === true && !customerSession) {
+      throw new AppError(401, "Inicia sesión para guardar una dirección frecuente.");
+    }
+    if (payload.saveAddress === true && (
+      hasSavedAddress ||
+      typeof payload.addressLabel !== "string" ||
+      payload.addressLabel.trim().length < 2 ||
+      payload.addressLabel.trim().length > 40
+    )) {
+      throw new AppError(400, "Ingresa un nombre de 2 a 40 caracteres para guardar la dirección.");
+    }
+  } else if (payload.saveAddress === true || payload.addressId !== undefined) {
+    throw new AppError(400, "Las direcciones solo se pueden seleccionar para pedidos a domicilio.");
   }
   if (!Array.isArray(payload.items) || payload.items.length < 1 || payload.items.length > 30) {
     throw new AppError(400, "El pedido debe contener entre 1 y 30 productos.");
@@ -98,8 +120,8 @@ function validatePayload(payload) {
   }
 }
 
-export async function createOrder(payload) {
-  validatePayload(payload);
+export async function createOrder(payload, customerSession = null) {
+  validatePayload(payload, customerSession);
 
   return createOrderTransaction(async (transaction) => {
     const customerRole = await transaction.rol.findUnique({ where: { nombre_rol: "Cliente" } });
@@ -109,20 +131,77 @@ export async function createOrder(payload) {
       throw new AppError(503, "Faltan datos iniciales del sistema. Ejecuta npm run db:seed.");
     }
 
-    const email = payload.customer.email.trim().toLowerCase();
-    const [firstName, ...lastNames] = payload.customer.name.trim().split(/\s+/);
-    const customer = await transaction.usuario.upsert({
-      where: { correo: email },
-      create: {
-        id_rol: customerRole.id_rol,
-        nombres: firstName,
-        apellidos: lastNames.join(" ") || "Cliente",
-        correo: email,
-        telefono: payload.customer.phone,
-        contrasena_hash: await bcrypt.hash(randomBytes(32).toString("hex"), 10),
-      },
-      update: {},
-    });
+    const account = customerSession
+      ? await transaction.cuentaCliente.findUnique({
+        where: { id_cuenta_cliente: customerSession.sub },
+      })
+      : null;
+    if (customerSession && !account) {
+      throw new AppError(401, "La cuenta de cliente ya no está disponible.");
+    }
+
+    const customerName = account
+      ? `${account.nombres} ${account.apellidos}`
+      : payload.customer.name.trim();
+    const customerEmail = account ? account.correo : payload.customer.email.trim().toLowerCase();
+    const customerPhone = account ? account.telefono : payload.customer.phone;
+    const [firstName, ...lastNames] = customerName.trim().split(/\s+/);
+    let customer;
+    if (account) {
+      customer = await transaction.usuario.findFirst({
+        where: { correo: customerEmail, id_rol: customerRole.id_rol },
+      });
+      if (!customer) {
+        const existingUser = await transaction.usuario.findUnique({
+          where: { correo: customerEmail },
+          select: { id_usuario: true },
+        });
+        const internalEmail = existingUser
+          ? `cuenta-${account.id_cuenta_cliente}-${randomBytes(6).toString("hex")}@clientes.invalid`
+          : customerEmail;
+        customer = await transaction.usuario.create({
+          data: {
+            id_rol: customerRole.id_rol,
+            nombres: firstName,
+            apellidos: lastNames.join(" ") || "Cliente",
+            correo: internalEmail,
+            telefono: customerPhone,
+            contrasena_hash: await bcrypt.hash(randomBytes(32).toString("hex"), 10),
+          },
+        });
+      }
+    } else {
+      customer = await transaction.usuario.upsert({
+        where: { correo: customerEmail },
+        create: {
+          id_rol: customerRole.id_rol,
+          nombres: firstName,
+          apellidos: lastNames.join(" ") || "Cliente",
+          correo: customerEmail,
+          telefono: customerPhone,
+          contrasena_hash: await bcrypt.hash(randomBytes(32).toString("hex"), 10),
+        },
+        update: {},
+      });
+    }
+
+    let deliveryAddress = null;
+    if (payload.mode === "Delivery") {
+      if (account && payload.addressId !== undefined) {
+        const savedAddress = await transaction.direccionCliente.findFirst({
+          where: {
+            id_direccion_cliente: payload.addressId,
+            id_cuenta_cliente: account.id_cuenta_cliente,
+          },
+        });
+        if (!savedAddress) {
+          throw new AppError(404, "No se encontró esa dirección en tu cuenta.");
+        }
+        deliveryAddress = savedAddress.direccion;
+      } else {
+        deliveryAddress = payload.address.trim();
+      }
+    }
 
     const productNames = [...new Set(payload.items.map((item) => item.name))];
     const products = await transaction.producto.findMany({
@@ -193,17 +272,28 @@ export async function createOrder(payload) {
     const order = await transaction.pedido.create({
       data: {
         id_usuario: customer.id_usuario,
+        id_cuenta_cliente: account?.id_cuenta_cliente ?? null,
         id_tipo_pedido: orderType.id_tipo_pedido,
         id_estado_pedido: pendingStatus.id_estado_pedido,
         fecha_hora: new Date(),
         total: (total / 100).toFixed(2),
-        direccion_entrega: payload.mode === "Delivery" ? payload.address.trim() : null,
+        direccion_entrega: deliveryAddress,
         detalles: {
           create: details.map(({ subtotal: _subtotal, extra: _extra, ...detail }) => detail),
         },
       },
       include: { detalles: true },
     });
+
+    if (account && payload.saveAddress === true) {
+      await transaction.direccionCliente.create({
+        data: {
+          id_cuenta_cliente: account.id_cuenta_cliente,
+          etiqueta: payload.addressLabel.trim(),
+          direccion: deliveryAddress,
+        },
+      });
+    }
 
     return { id: order.id_pedido, status: "Pendiente", total, createdAt: order.fecha_hora };
   });

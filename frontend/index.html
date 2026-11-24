@@ -27,6 +27,7 @@
       <a href="#menu">Menú</a>
       <a href="#promos">Promos</a>
       <a href="#ubicaciones">Ubicaciones</a>
+      <a href="account.html">Mi cuenta</a>
     </nav>
 
     <div class="header-actions">
@@ -124,14 +125,23 @@
           <input id="customer-phone" name="phone" type="tel" autocomplete="tel" inputmode="numeric" pattern="[0-9]{7,15}" minlength="7" maxlength="15" required>
         </div>
         <div class="checkout-field" id="delivery-address-field" hidden>
+          <label for="saved-delivery-address">Dirección frecuente</label>
+          <select id="saved-delivery-address" name="savedAddress">
+            <option value="">Escribir una dirección nueva</option>
+          </select>
           <label for="delivery-address">Dirección de entrega</label>
           <input id="delivery-address" name="address" type="text" autocomplete="street-address" maxlength="255">
+          <div class="save-address-option" id="save-address-option" hidden>
+            <label><input id="save-delivery-address" type="checkbox"> Guardar como dirección frecuente</label>
+            <input id="delivery-address-label" type="text" maxlength="40" placeholder="Nombre, por ejemplo Casa" aria-label="Nombre para la dirección frecuente">
+          </div>
         </div>
         <div class="checkout-field">
           <label for="customer-email">Correo electrónico</label>
           <input id="customer-email" name="email" type="email" autocomplete="email" pattern="[A-Za-z0-9.!#$%&amp;'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+" required>
           <small>Ingresa un correo válido, por ejemplo nombre@correo.com.</small>
         </div>
+        <p class="checkout-account-link"><a href="account.html">¿Ya tienes cuenta? Inicia sesión para ver tus direcciones frecuentes.</a></p>
         <button class="button button-primary checkout-button" id="confirm-order" type="submit">Confirmar pedido <span aria-hidden="true">↗</span></button>
       </form>
     </div>

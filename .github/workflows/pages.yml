@@ -59,6 +59,7 @@ jobs:
           mkdir -p _site
           cp frontend/index.html _site/index.html
           cp frontend/admin.html _site/admin.html
+          cp frontend/account.html _site/account.html
           cp -R frontend/src _site/src
 
       - name: Aplicar URL personalizada de la API

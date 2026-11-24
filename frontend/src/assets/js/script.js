@@ -16,14 +16,22 @@
   const themeToggle = document.querySelector("#theme-toggle");
   const themeToggleIcon = document.querySelector("#theme-toggle-icon");
   const checkoutForm = document.querySelector("#checkout-form");
+  const customerNameInput = document.querySelector("#customer-name");
   const customerEmail = document.querySelector("#customer-email");
   const customerPhone = document.querySelector("#customer-phone");
   const deliveryAddress = document.querySelector("#delivery-address");
   const deliveryAddressField = document.querySelector("#delivery-address-field");
+  const savedAddressSelect = document.querySelector("#saved-delivery-address");
+  const saveAddressOption = document.querySelector("#save-address-option");
+  const saveAddressCheckbox = document.querySelector("#save-delivery-address");
+  const addressLabelInput = document.querySelector("#delivery-address-label");
   const productGrid = document.querySelector("#menu-products");
   const categoryButtons = document.querySelectorAll(".category-tabs button");
   let productCards = productGrid.querySelectorAll(".product-card");
   let previouslyFocusedElement;
+  let customerSession = null;
+  let savedAddresses = [];
+  const customerSessionKey = "brasa-viva-customer-session";
 
   function setMainNavOpen(isOpen) {
     mainNav.classList.toggle("is-open", isOpen);
@@ -516,11 +524,125 @@
     ).value === "Delivery";
     deliveryAddressField.hidden = !isDelivery;
     deliveryAddress.required = isDelivery;
+    if (!isDelivery) {
+      if (savedAddressSelect.value) {
+        savedAddressSelect.value = "";
+        deliveryAddress.readOnly = false;
+      }
+      saveAddressCheckbox.checked = false;
+    }
+    savedAddressSelect.hidden = !isDelivery || !customerSession;
+    updateSaveAddressVisibility();
+  }
+
+  function updateSaveAddressVisibility() {
+    const canSaveAddress = Boolean(customerSession) &&
+      !savedAddressSelect.value &&
+      document.querySelector('input[name="order-mode"]:checked').value === "Delivery";
+    saveAddressOption.hidden = !canSaveAddress;
+    addressLabelInput.required = canSaveAddress && saveAddressCheckbox.checked;
+    addressLabelInput.hidden = !canSaveAddress || !saveAddressCheckbox.checked;
+  }
+
+  function applyCustomerSession() {
+    const fields = [customerNameInput, customerPhone, customerEmail];
+    if (customerSession) {
+      const [name, ...surname] = customerSession.name.split(/\s+/);
+      customerNameInput.value = [name, ...surname].join(" ");
+      customerPhone.value = customerSession.phone;
+      customerEmail.value = customerSession.email;
+      fields.forEach((field) => {
+        field.readOnly = true;
+      });
+    } else {
+      fields.forEach((field) => {
+        field.readOnly = false;
+      });
+    }
+  }
+
+  function renderSavedAddresses() {
+    savedAddressSelect.replaceChildren();
+    const newAddressOption = document.createElement("option");
+    newAddressOption.value = "";
+    newAddressOption.textContent = "Escribir una dirección nueva";
+    savedAddressSelect.append(newAddressOption);
+    for (const address of savedAddresses) {
+      const option = document.createElement("option");
+      option.value = String(address.id);
+      option.textContent = `${address.label}: ${address.address}`;
+      savedAddressSelect.append(option);
+    }
+  }
+
+  async function loadSavedAddresses(token) {
+    const response = await fetch(`${apiBaseUrl}/customer/addresses`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const result = await readApiResponse(response);
+    if (!Array.isArray(result.data)) {
+      throw new Error("El servidor devolvió una lista de direcciones inválida.");
+    }
+    savedAddresses = result.data;
+    renderSavedAddresses();
+  }
+
+  async function initializeCustomerSession() {
+    let token;
+    try {
+      token = window.sessionStorage.getItem(customerSessionKey);
+    } catch (error) {
+      console.error("No se pudo leer la sesión del cliente.", error);
+      liveRegion.textContent = "No se pudo recuperar la sesión del cliente.";
+      return;
+    }
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/customer/session`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await readApiResponse(response);
+      customerSession = result.user;
+      applyCustomerSession();
+      await loadSavedAddresses(token);
+      updateDeliveryAddress();
+    } catch (error) {
+      if (/Inicia sesión/.test(error.message)) {
+        window.sessionStorage.removeItem(customerSessionKey);
+        liveRegion.textContent = "Tu sesión venció. Puedes iniciar sesión nuevamente desde Mi cuenta.";
+      } else {
+        console.error("No se pudieron cargar los datos de la cuenta del cliente.", error);
+        liveRegion.textContent = "No se pudieron cargar tus datos guardados. Puedes continuar como invitado.";
+      }
+    }
   }
 
   document.querySelectorAll('input[name="order-mode"]').forEach((input) => {
     input.addEventListener("change", updateDeliveryAddress);
   });
+  savedAddressSelect.addEventListener("change", () => {
+    const selectedAddress = savedAddresses.find(
+      (address) => String(address.id) === savedAddressSelect.value,
+    );
+    if (selectedAddress) {
+      deliveryAddress.value = selectedAddress.address;
+      deliveryAddress.readOnly = true;
+      saveAddressCheckbox.checked = false;
+    } else {
+      deliveryAddress.value = "";
+      deliveryAddress.readOnly = false;
+    }
+    updateSaveAddressVisibility();
+  });
+  deliveryAddress.addEventListener("input", () => {
+    if (savedAddressSelect.value) {
+      savedAddressSelect.value = "";
+      deliveryAddress.readOnly = false;
+    }
+    updateSaveAddressVisibility();
+  });
+  saveAddressCheckbox.addEventListener("change", updateSaveAddressVisibility);
   updateDeliveryAddress();
 
   checkoutForm.addEventListener("keydown", (event) => {
@@ -563,17 +685,31 @@
     const phone = customerPhone.value;
     const email = customerEmail.value.trim();
     const submitButton = document.querySelector("#confirm-order");
+    const shouldRefreshSavedAddresses = customerSession &&
+      mode === "Delivery" &&
+      saveAddressCheckbox.checked;
     submitButton.disabled = true;
     liveRegion.textContent = "Enviando tu pedido.";
 
     try {
       const response = await fetch(`${apiBaseUrl}/orders`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(window.sessionStorage.getItem(customerSessionKey)
+            ? { Authorization: `Bearer ${window.sessionStorage.getItem(customerSessionKey)}` }
+            : {}),
+        },
         body: JSON.stringify({
           customer: { name: customerName, phone, email },
           mode,
           address: deliveryAddress.value,
+          ...(mode === "Delivery" && savedAddressSelect.value
+            ? { addressId: Number(savedAddressSelect.value) }
+            : {}),
+          ...(shouldRefreshSavedAddresses
+            ? { saveAddress: true, addressLabel: addressLabelInput.value.trim() }
+            : {}),
           items: cart.map(({ name, quantity, extra }) => ({
             name,
             quantity,
@@ -590,8 +726,22 @@
       renderCart();
       const saved = saveCart();
       checkoutForm.reset();
+      applyCustomerSession();
+      savedAddressSelect.value = "";
+      deliveryAddress.readOnly = false;
       updateDeliveryAddress();
-      liveRegion.textContent = `Pedido ${result.order.id} recibido. Total ${formatPrice(result.order.total)}.`;
+      if (shouldRefreshSavedAddresses) {
+        const token = window.sessionStorage.getItem(customerSessionKey);
+        try {
+          await loadSavedAddresses(token);
+        } catch (error) {
+          console.error("El pedido se guardó, pero no se pudo actualizar la lista de direcciones.", error);
+          liveRegion.textContent = `Pedido ${result.order.id} recibido. No se pudo actualizar la lista de direcciones.`;
+        }
+      }
+      if (!liveRegion.textContent.includes("No se pudo actualizar la lista")) {
+        liveRegion.textContent = `Pedido ${result.order.id} recibido. Total ${formatPrice(result.order.total)}.`;
+      }
       window.alert(
         `Gracias, ${customerName}.\nPedido recibido para ${mode}.\nCódigo: ${result.order.id}\nTotal: ${formatPrice(result.order.total)}${saved ? "" : "\nNo se pudo actualizar el carrito guardado."}`,
       );
@@ -629,4 +779,5 @@
   }
 
   initializeProducts();
+  initializeCustomerSession();
 })();

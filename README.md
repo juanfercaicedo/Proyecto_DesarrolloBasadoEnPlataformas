@@ -9,6 +9,7 @@ El repositorio separa las aplicaciones por responsabilidad:
 - [`frontend/`](./frontend): sitio estático HTML, CSS y JavaScript; se publica en GitHub Pages.
 - [`backend/`](./backend): API Node.js/Express y PostgreSQL/Prisma; se despliega como un servicio independiente en Render.
 - [`frontend/admin.html`](./frontend/admin.html): panel privado para administrar pedidos, catálogo, ingredientes, lotes, proveedores, solicitudes de compra, recetas, usuarios y reportes.
+- [`frontend/account.html`](./frontend/account.html): registro e inicio de sesión de clientes, direcciones frecuentes e historial de pedidos.
 
 La arquitectura es **cliente-servidor**: el navegador consume la API HTTPS. El backend se mantiene como un **monolito modular** (una sola aplicación desplegable) con capas:
 
@@ -25,7 +26,7 @@ El servidor verifica los productos y calcula los precios; guarda cada pedido y s
 2. Confirma la creación y espera a que el despliegue termine. El primer arranque genera las tablas con Prisma y carga los datos iniciales.
 3. Verifica la API en `https://brasa-viva-api.onrender.com/api/health`; debe responder `{"status":"ok"}`.
 
-El Blueprint configura `DATABASE_URL`, permite el origen del frontend actual y genera valores para `ADMIN_API_KEY` y `ADMIN_PASSWORD`. Si Render asigna una URL pública distinta, configura la variable de repositorio `BRASA_API_URL` en **GitHub → Settings → Secrets and variables → Actions → Variables** con la URL completa terminada en `/api`. Luego vuelve a ejecutar el workflow de Pages.
+El Blueprint configura `DATABASE_URL`, permite el origen del frontend actual y genera valores para `ADMIN_API_KEY`, `ADMIN_PASSWORD` y `CUSTOMER_SESSION_SECRET`. Si Render asigna una URL pública distinta, configura la variable de repositorio `BRASA_API_URL` en **GitHub → Settings → Secrets and variables → Actions → Variables** con la URL completa terminada en `/api`. Luego vuelve a ejecutar el workflow de Pages.
 
 Al publicar, abre `/admin.html` en el mismo sitio e inicia sesión con `ADMIN_EMAIL` y `ADMIN_PASSWORD` configurados en Render (por defecto, el correo es `admin@brasaviva.local`). El usuario debe tener el rol `Administrador`. El panel usa una sesión firmada y temporal; `ADMIN_API_KEY` permanece en el servidor y no debe copiarse al navegador. No compartas ni publiques la contraseña administrativa.
 
@@ -48,6 +49,7 @@ npm ci
 $env:DATABASE_URL = "postgresql://usuario:clave@localhost:5432/brasa_viva"
 $env:ADMIN_PASSWORD = "una-clave-local-segura-de-al-menos-12"
 $env:ADMIN_API_KEY = "una-clave-administrativa-local"
+$env:CUSTOMER_SESSION_SECRET = "un-secreto-local-seguro-para-sesiones-de-clientes"
 npm run db:generate
 npm run db:push
 npm run db:seed
@@ -66,6 +68,8 @@ El total se calcula en el servidor en centavos. Para llamadas administrativas di
 
 `POST /api/admin/session` autentica cuentas con rol `Administrador` y devuelve una sesión Bearer firmada que vence en ocho horas; `/api/admin/session` permite comprobarla. El panel administrativo gestiona pedidos, productos, categorías, ingredientes, lotes con fechas de vencimiento, proveedores y solicitudes de compra, recetas, usuarios y reportes de ventas. Cuando un ingrediente llega al mínimo, el administrador puede registrar una solicitud pendiente al proveedor. El inventario solo aumenta al registrar su recepción, momento en que se crea un lote con fecha de vencimiento. Las listas CRUD administrativas, `/api/sales` y `/api/inventory/lots` aceptan `page` y `limit` (por defecto, página 1 con 50 registros; máximo 100) y responden con `pagination` junto con `data`. `/api/inventory/low-stock` devuelve el resumen completo por ingrediente. El cálculo de stock bajo excluye lotes vencidos.
 
+Los clientes pueden comprar como invitados o crear una cuenta desde `/account.html`. `POST /api/customer/register` registra una cuenta, `POST /api/customer/session` inicia sesión y las rutas `/api/customer/addresses` y `/api/customer/orders` requieren su sesión Bearer. Las direcciones pueden agregarse, editarse y eliminarse. Los pedidos anteriores muestran las compras hechas con la cuenta; los pedidos de invitado no se asocian automáticamente para evitar exponerlos al registrar una cuenta con el mismo correo. Al pedir desde una sesión se pueden seleccionar direcciones guardadas o guardar una nueva para futuras compras.
+
 ## Informes de auditoría
 
 Los diez informes, con hallazgos, correcciones y límites de validación, están en [`frontend/src/assets/documentation/auditorias/`](./frontend/src/assets/documentation/auditorias/):
@@ -80,8 +84,3 @@ Los diez informes, con hallazgos, correcciones y límites de validación, están
 8. [Categorías del catálogo](./frontend/src/assets/documentation/auditorias/auditoria-08-categorias-catalogo.md)
 9. [Paginación administrativa](./frontend/src/assets/documentation/auditorias/auditoria-09-paginacion-administrativa.md)
 10. [Integración continua](./frontend/src/assets/documentation/auditorias/auditoria-10-integracion-continua.md)
-
-
-- [API RENDER](https://brasa-viva-api.onrender.com)
-- admin@brasaviva.local
-- OA+nJle4qZWLiEYQ1FK3oWuEWAUjgRReiuASP1VD31k=

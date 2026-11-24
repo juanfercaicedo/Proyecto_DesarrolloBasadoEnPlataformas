@@ -14,6 +14,7 @@ const [
   { AppError },
   { errorHandler },
   { createAdminSession, verifyAdminSession },
+  { createCustomerSession, verifyCustomerSession },
 ] = await Promise.all([
   import("../services/resourceService.js"),
   import("../controllers/inventoryController.js"),
@@ -21,6 +22,7 @@ const [
   import("../errors/AppError.js"),
   import("../middlewares/errorHandler.js"),
   import("../services/adminSessionService.js"),
+  import("../services/customerSessionService.js"),
 ]);
 const server = createServer(createApp());
 server.listen(0, "127.0.0.1");
@@ -72,10 +74,10 @@ test("rechaza orígenes web que no estén configurados", async () => {
 
 test("registra las entidades administrativas y las relaciones Prisma del pedido", () => {
   assert.equal(Object.keys(models).length, 17);
-  assert.equal(Prisma.dmmf.datamodel.models.length, 18);
+  assert.equal(Prisma.dmmf.datamodel.models.length, 20);
   const pedido = Prisma.dmmf.datamodel.models.find((model) => model.name === "Pedido");
   const relations = pedido.fields.filter((field) => field.kind === "object").map((field) => field.name);
-  assert.deepEqual(relations, ["cliente", "tipo", "estado", "detalles", "pago", "factura", "ordenSalida"]);
+  assert.deepEqual(relations, ["cliente", "cuentaCliente", "tipo", "estado", "detalles", "pago", "factura", "ordenSalida"]);
   assert.equal(models.Usuario.fields.includes("contrasena_hash"), true);
 });
 
@@ -117,6 +119,55 @@ test("rechaza sesiones administrativas vencidas o alteradas", () => {
 
   assert.equal(verifyAdminSession(token, "test-admin-session-secret", 1_000 + 8 * 60 * 60 * 1000), null);
   assert.equal(verifyAdminSession(`${token}x`, "test-admin-session-secret", 2_000), null);
+});
+
+test("firma y valida sesiones temporales de clientes", () => {
+  const account = {
+    id_cuenta_cliente: 7,
+    nombres: "Ana",
+    apellidos: "Pérez",
+    correo: "ana@example.com",
+    telefono: "123456789",
+  };
+  const { token } = createCustomerSession(account, "test-customer-session-secret", 1_000);
+
+  assert.equal(
+    verifyCustomerSession(token, "test-customer-session-secret", 1_001).email,
+    "ana@example.com",
+  );
+  assert.equal(
+    verifyCustomerSession(token, "test-customer-session-secret", 1_000 + 7 * 24 * 60 * 60 * 1000),
+    null,
+  );
+  assert.equal(verifyCustomerSession(`${token}x`, "test-customer-session-secret", 2_000), null);
+});
+
+test("rechaza el registro de clientes con contraseñas débiles antes de acceder a la base", async () => {
+  const response = await fetch(`${baseUrl}/api/customer/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "Ana",
+      surname: "Pérez",
+      email: "ana@example.com",
+      phone: "123456789",
+      password: "corta",
+    }),
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.match(body.error, /12 a 72 bytes/);
+});
+
+test("protege el historial de pedidos y rechaza sesiones de cliente inválidas", async () => {
+  const response = await fetch(`${baseUrl}/api/customer/orders`, {
+    headers: { Authorization: "Bearer token-invalido" },
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 401);
+  assert.match(body.error, /Inicia sesión/);
 });
 
 test("requiere una sesión individual para crear solicitudes a proveedores", async () => {
