@@ -45,7 +45,7 @@ jobs:
     needs: validate
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.retry_deployment.outputs.page_url || steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Descargar el repositorio
@@ -76,4 +76,14 @@ jobs:
 
       - name: Publicar sitio
         id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      - name: Esperar propagación del artefacto
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 10
+
+      - name: Reintentar publicación
+        id: retry_deployment
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
