@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { verifyAdminSession } from "../services/adminSessionService.js";
 
 export function requireAdminKey(request, response, next) {
   const expected = process.env.ADMIN_API_KEY;
@@ -9,8 +10,17 @@ export function requireAdminKey(request, response, next) {
 
   const expectedBuffer = Buffer.from(expected);
   const providedBuffer = Buffer.from(provided);
-  if (expectedBuffer.length !== providedBuffer.length || !timingSafeEqual(expectedBuffer, providedBuffer)) {
+  if (expectedBuffer.length === providedBuffer.length && timingSafeEqual(expectedBuffer, providedBuffer)) {
+    next();
+    return;
+  }
+
+  const authorization = request.get("authorization") ?? "";
+  const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+  const adminUser = verifyAdminSession(token, expected);
+  if (!adminUser) {
     return response.status(401).json({ error: "Credenciales administrativas no válidas." });
   }
+  request.adminUser = adminUser;
   next();
 }

@@ -18,6 +18,7 @@ import { paymentMethodsController } from "../controllers/paymentMethodsControlle
 import { dispatchStatusesController } from "../controllers/dispatchStatusesController.js";
 import { dispatchOrdersController } from "../controllers/dispatchOrdersController.js";
 import { requireAdminKey } from "../middlewares/requireAdminKey.js";
+import { adminSessionController } from "../controllers/adminSessionController.js";
 
 export const apiRouter = Router();
 
@@ -32,6 +33,8 @@ function addCrudRoutes(path, controller) {
 apiRouter.get("/health", (_request, response) => {
   response.json({ status: "ok" });
 });
+apiRouter.post("/admin/session", adminSessionController.create);
+apiRouter.get("/admin/session", requireAdminKey, adminSessionController.current);
 apiRouter.get("/products", productsController.listPublic);
 apiRouter.post("/orders", ordersController.checkout);
 apiRouter.get("/sales/summary", requireAdminKey, salesController.summary);

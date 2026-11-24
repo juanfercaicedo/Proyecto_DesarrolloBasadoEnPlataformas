@@ -13,12 +13,14 @@ const [
   { consumeIngredientStock },
   { AppError },
   { errorHandler },
+  { createAdminSession, verifyAdminSession },
 ] = await Promise.all([
   import("../services/resourceService.js"),
   import("../controllers/inventoryController.js"),
   import("../services/orderService.js"),
   import("../errors/AppError.js"),
   import("../middlewares/errorHandler.js"),
+  import("../services/adminSessionService.js"),
 ]);
 const server = createServer(createApp());
 server.listen(0, "127.0.0.1");
@@ -55,6 +57,7 @@ test("permite el origen de GitHub Pages y responde solicitudes CORS", async () =
     "https://juanfercaicedo.github.io",
   );
   assert.match(response.headers.get("access-control-allow-methods"), /POST/);
+  assert.match(response.headers.get("access-control-allow-headers"), /Authorization/);
 });
 
 test("rechaza orígenes web que no estén configurados", async () => {
@@ -82,6 +85,37 @@ test("protege recursos administrativos si falta la clave", async () => {
 
   assert.equal(response.status, 503);
   assert.match(body.error, /ADMIN_API_KEY/);
+});
+
+test("acepta sesiones individuales firmadas para consultar la sesión administrativa", async () => {
+  process.env.ADMIN_API_KEY = "test-admin-session-secret";
+  const { token } = createAdminSession({
+    id_usuario: 7,
+    nombres: "Ana",
+    apellidos: "Pérez",
+    correo: "ana@example.com",
+  });
+  const response = await fetch(`${baseUrl}/api/admin/session`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.user.sub, 7);
+  assert.equal(body.user.email, "ana@example.com");
+  delete process.env.ADMIN_API_KEY;
+});
+
+test("rechaza sesiones administrativas vencidas o alteradas", () => {
+  const { token } = createAdminSession({
+    id_usuario: 7,
+    nombres: "Ana",
+    apellidos: "Pérez",
+    correo: "ana@example.com",
+  }, "test-admin-session-secret", 1_000);
+
+  assert.equal(verifyAdminSession(token, "test-admin-session-secret", 1_000 + 8 * 60 * 60 * 1000), null);
+  assert.equal(verifyAdminSession(`${token}x`, "test-admin-session-secret", 2_000), null);
 });
 
 test("rechaza el alta de usuarios sin contraseña", async () => {

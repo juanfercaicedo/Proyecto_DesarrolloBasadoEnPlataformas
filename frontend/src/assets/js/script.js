@@ -11,6 +11,8 @@
   const openCartButton = document.querySelector("#open-cart");
   const headerCartButton = document.querySelector("#header-cart");
   const headerCartCount = document.querySelector("#header-cart-count");
+  const menuToggle = document.querySelector("#menu-toggle");
+  const mainNav = document.querySelector("#main-nav");
   const themeToggle = document.querySelector("#theme-toggle");
   const themeToggleIcon = document.querySelector("#theme-toggle-icon");
   const checkoutForm = document.querySelector("#checkout-form");
@@ -22,6 +24,29 @@
   const categoryButtons = document.querySelectorAll(".category-tabs button");
   let productCards = productGrid.querySelectorAll(".product-card");
   let previouslyFocusedElement;
+
+  function setMainNavOpen(isOpen) {
+    mainNav.classList.toggle("is-open", isOpen);
+    menuToggle.setAttribute("aria-expanded", String(isOpen));
+    menuToggle.setAttribute("aria-label", isOpen ? "Cerrar menú" : "Abrir menú");
+  }
+
+  menuToggle.addEventListener("click", () => {
+    setMainNavOpen(menuToggle.getAttribute("aria-expanded") !== "true");
+  });
+
+  mainNav.addEventListener("click", (event) => {
+    if (event.target instanceof Element && event.target.closest("a")) {
+      setMainNavOpen(false);
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && menuToggle.getAttribute("aria-expanded") === "true") {
+      setMainNavOpen(false);
+      menuToggle.focus();
+    }
+  });
 
   function updateThemeToggle(isDark) {
     const label = isDark ? "Activar modo claro" : "Activar modo oscuro";

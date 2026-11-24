@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Administración de Brasa Viva: pedidos, productos e inventario.">
+  <title>Administración | Brasa Viva</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="src/assets/css/styles.css">
+  <link rel="stylesheet" href="src/assets/css/admin.css">
+</head>
+<body class="admin-page">
+  <header class="admin-topbar">
+    <a class="brand" href="index.html" aria-label="Brasa Viva, ir al sitio">
+      <span class="brand-mark">BV</span>
+      <span>Brasa <strong>Viva</strong></span>
+    </a>
+    <span class="admin-topbar-title">Administración</span>
+    <a class="admin-back-link" href="index.html">Volver a la tienda <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main class="admin-main">
+    <section class="login-card" id="login-panel" aria-labelledby="login-title">
+      <p class="eyebrow">Acceso seguro</p>
+      <h1 id="login-title">Panel de<br><em>administración</em></h1>
+      <p class="admin-muted">Ingresa con la cuenta de administrador de Brasa Viva.</p>
+      <form id="login-form">
+        <label for="login-email">Correo electrónico</label>
+        <input id="login-email" name="email" type="email" autocomplete="username" required>
+        <label for="login-password">Contraseña</label>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+        <p class="form-message" id="login-message" role="alert" hidden></p>
+        <button class="button button-primary" type="submit">Iniciar sesión <span aria-hidden="true">→</span></button>
+      </form>
+    </section>
+
+    <div class="admin-app" id="admin-panel" hidden>
+      <aside class="admin-sidebar">
+        <p class="eyebrow">Gestión</p>
+        <nav class="admin-nav" aria-label="Secciones de administración">
+          <button type="button" data-view="dashboard" aria-current="page">Resumen</button>
+          <button type="button" data-view="orders">Pedidos</button>
+          <button type="button" data-view="products">Productos</button>
+          <button type="button" data-view="categories">Categorías</button>
+          <button type="button" data-view="inventory">Inventario</button>
+          <button type="button" data-view="recipes">Recetas</button>
+          <button type="button" data-view="users">Usuarios</button>
+          <button type="button" data-view="reports">Reportes</button>
+        </nav>
+      </aside>
+
+      <div class="admin-content">
+        <header class="admin-userbar">
+          <div>
+            <p class="eyebrow">Brasa Viva</p>
+            <strong id="admin-user-name"></strong>
+          </div>
+          <button class="button button-quiet" id="logout-button" type="button">Cerrar sesión</button>
+        </header>
+        <p class="admin-notice" id="admin-notice" role="status" aria-live="polite" hidden></p>
+
+        <section class="admin-view" data-panel="dashboard">
+          <div class="view-heading"><p class="eyebrow">Hoy en Brasa Viva</p><h1>Resumen</h1></div>
+          <div class="summary-grid">
+            <article class="summary-card"><span>Ventas acumuladas</span><strong id="summary-sales">—</strong></article>
+            <article class="summary-card"><span>Pedidos registrados</span><strong id="summary-orders">—</strong></article>
+            <article class="summary-card"><span>Ingredientes bajo mínimo</span><strong id="summary-stock">—</strong></article>
+          </div>
+          <div class="admin-card">
+            <div class="card-heading"><div><p class="eyebrow">Actividad reciente</p><h2>Últimos pedidos</h2></div><button class="text-button" type="button" data-refresh="dashboard">Actualizar</button></div>
+            <div class="table-wrap" id="recent-orders"></div>
+          </div>
+        </section>
+
+        <section class="admin-view" data-panel="orders" hidden>
+          <div class="view-heading"><p class="eyebrow">Seguimiento</p><h1>Pedidos</h1></div>
+          <div class="admin-card"><div class="card-heading"><p class="admin-muted">Consulta los pedidos recibidos y actualiza su estado.</p><button class="text-button" type="button" data-refresh="orders">Actualizar</button></div><div class="table-wrap" id="orders-table"></div></div>
+        </section>
+
+        <section class="admin-view" data-panel="products" hidden>
+          <div class="view-heading"><p class="eyebrow">Catálogo</p><h1>Productos</h1></div>
+          <p class="admin-muted">Actualiza precio, categoría y disponibilidad de los productos configurados en el menú.</p>
+          <div id="products-resource"></div>
+        </section>
+
+        <section class="admin-view" data-panel="categories" hidden>
+          <div class="view-heading"><p class="eyebrow">Organización del menú</p><h1>Categorías</h1></div>
+          <div id="categories-resource"></div>
+        </section>
+
+        <section class="admin-view" data-panel="inventory" hidden>
+          <div class="view-heading"><p class="eyebrow">Ingredientes y existencias</p><h1>Inventario</h1></div>
+          <p class="admin-muted">Cada pedido confirmado descuenta de los lotes los ingredientes definidos en su receta. Registra aquí las compras a proveedores como nuevos lotes y controla sus vencimientos.</p>
+          <div class="admin-card">
+            <div class="card-heading"><div><p class="eyebrow">Revisión de stock</p><h2>Ingredientes bajo mínimo</h2></div><button class="text-button" type="button" data-refresh="low-stock">Actualizar</button></div>
+            <div class="table-wrap" id="low-stock-table"></div>
+          </div>
+          <div class="resource-grid">
+            <div id="ingredients-resource"></div>
+            <div id="lots-resource"></div>
+          </div>
+        </section>
+
+        <section class="admin-view" data-panel="recipes" hidden>
+          <div class="view-heading"><p class="eyebrow">Consumo por producto</p><h1>Recetas</h1></div>
+          <p class="admin-muted">Cada fila define un ingrediente y la cantidad necesaria para preparar un producto.</p>
+          <div id="recipes-resource"></div>
+        </section>
+
+        <section class="admin-view" data-panel="users" hidden>
+          <div class="view-heading"><p class="eyebrow">Accesos del equipo</p><h1>Usuarios</h1></div>
+          <p class="admin-muted">Solo las cuentas con rol Administrador pueden iniciar sesión en este panel.</p>
+          <div id="users-resource"></div>
+        </section>
+
+        <section class="admin-view" data-panel="reports" hidden>
+          <div class="view-heading"><p class="eyebrow">Rendimiento</p><h1>Reportes</h1></div>
+          <form class="report-filter" id="report-filter">
+            <label>Desde <input name="since" type="date"></label>
+            <label>Hasta <input name="until" type="date"></label>
+            <button class="button button-primary" type="submit">Consultar</button>
+          </form>
+          <div class="summary-grid">
+            <article class="summary-card"><span>Ventas del período</span><strong id="report-sales">—</strong></article>
+            <article class="summary-card"><span>Pedidos del período</span><strong id="report-orders">—</strong></article>
+          </div>
+          <p class="admin-muted">El período usa las fechas seleccionadas, incluida la fecha final.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="src/assets/js/config.js"></script>
+  <script type="module" src="src/assets/js/admin.js"></script>
+</body>
+</html>

@@ -8,6 +8,7 @@ El repositorio separa las aplicaciones por responsabilidad:
 
 - [`frontend/`](./frontend): sitio estático HTML, CSS y JavaScript; se publica en GitHub Pages.
 - [`backend/`](./backend): API Node.js/Express y PostgreSQL/Prisma; se despliega como un servicio independiente en Render.
+- [`frontend/admin.html`](./frontend/admin.html): panel privado para administrar pedidos, catálogo, ingredientes, lotes, recetas, usuarios y reportes.
 
 La arquitectura es **cliente-servidor**: el navegador consume la API HTTPS. El backend se mantiene como un **monolito modular** (una sola aplicación desplegable) con capas:
 
@@ -25,6 +26,8 @@ El servidor verifica los productos y calcula los precios; guarda cada pedido y s
 3. Verifica la API en `https://brasa-viva-api.onrender.com/api/health`; debe responder `{"status":"ok"}`.
 
 El Blueprint configura `DATABASE_URL`, permite el origen del frontend actual y genera valores para `ADMIN_API_KEY` y `ADMIN_PASSWORD`. Si Render asigna una URL pública distinta, configura la variable de repositorio `BRASA_API_URL` en **GitHub → Settings → Secrets and variables → Actions → Variables** con la URL completa terminada en `/api`. Luego vuelve a ejecutar el workflow de Pages.
+
+Al publicar, abre `/admin.html` en el mismo sitio e inicia sesión con `ADMIN_EMAIL` y `ADMIN_PASSWORD` configurados en Render (por defecto, el correo es `admin@brasaviva.local`). El usuario debe tener el rol `Administrador`. El panel usa una sesión firmada y temporal; `ADMIN_API_KEY` permanece en el servidor y no debe copiarse al navegador. No compartas ni publiques la contraseña administrativa.
 
 > La configuración usa planes gratuitos para facilitar el primer despliegue. Render puede limitar o expirar sus bases gratuitas; revisa las condiciones vigentes y usa un plan con persistencia adecuada antes de aceptar pedidos reales. La base creada por este Blueprint es nueva: los datos de una instalación MySQL anterior no se migran automáticamente.
 >
@@ -59,9 +62,9 @@ Sirve [`frontend/`](./frontend) con una extensión como Live Server en `http://l
 - `GET /api/products`: catálogo disponible.
 - `POST /api/orders`: registra un pedido; acepta `customer` (`name`, `phone`, `email`), `mode` (`Delivery`, `Para llevar` o `En restaurante`), `address` (obligatoria para Delivery) e `items` (`name`, `quantity`, `extra`).
 
-El total se calcula en el servidor en centavos. Las rutas administrativas requieren el encabezado `x-admin-key`; configura secretos propios en Render antes de habilitar su uso.
+El total se calcula en el servidor en centavos. Para llamadas administrativas directas a la API, configura y envía `x-admin-key`; el panel obtiene una sesión Bearer individual al iniciar sesión. Mantén `ADMIN_API_KEY` en el servidor y no la copies al frontend.
 
-Las listas CRUD administrativas, `/api/sales` y `/api/inventory/lots` aceptan `page` y `limit` (por defecto, página 1 con 50 registros; máximo 100) y responden con `pagination` junto con `data`. `/api/inventory/low-stock` devuelve el resumen completo por ingrediente. El cálculo de stock bajo excluye lotes vencidos.
+`POST /api/admin/session` autentica cuentas con rol `Administrador` y devuelve una sesión Bearer firmada que vence en ocho horas; `/api/admin/session` permite comprobarla. El panel administrativo gestiona pedidos, productos, categorías, ingredientes, lotes con fechas de vencimiento, recetas, usuarios y reportes de ventas. Las listas CRUD administrativas, `/api/sales` y `/api/inventory/lots` aceptan `page` y `limit` (por defecto, página 1 con 50 registros; máximo 100) y responden con `pagination` junto con `data`. `/api/inventory/low-stock` devuelve el resumen completo por ingrediente. El cálculo de stock bajo excluye lotes vencidos.
 
 ## Informes de auditoría
 
@@ -80,3 +83,5 @@ Los diez informes, con hallazgos, correcciones y límites de validación, están
 
 
 - [API RENDER](https://brasa-viva-api.onrender.com)
+- admin@brasaviva.local
+- OA+nJle4qZWLiEYQ1FK3oWuEWAUjgRReiuASP1VD31k=

@@ -1,0 +1,86 @@
+.admin-page { background: #f7f4ed; min-height: 100vh; }
+.admin-topbar { align-items: center; background: var(--paper); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; min-height: 72px; padding: 12px 5vw; }
+.admin-topbar-title { font-family: Oswald, sans-serif; font-size: 1.15rem; text-transform: uppercase; }
+.admin-back-link, .text-button { color: var(--red); font-size: .78rem; font-weight: 700; }
+.admin-back-link span { margin-left: 6px; }
+.admin-main { margin: 0 auto; max-width: 1440px; padding: 36px 4vw 70px; }
+.admin-muted { color: #777169; font-size: .84rem; line-height: 1.55; }
+.login-card { background: var(--paper); box-shadow: var(--shadow); margin: 4vh auto; max-width: 470px; padding: clamp(26px, 5vw, 52px); }
+.login-card h1 { font-size: clamp(3rem, 8vw, 4.7rem); margin: 0 0 17px; }
+.login-card form { display: grid; gap: 10px; margin-top: 28px; }
+.login-card label, .report-filter label, .resource-form label { font-size: .75rem; font-weight: 700; }
+.login-card input, .report-filter input, .resource-form input, .resource-form select { background: var(--paper); border: 1px solid var(--line); color: var(--ink); font: inherit; min-height: 43px; padding: 9px 11px; width: 100%; }
+.resource-form input[type="checkbox"] { height: 18px; min-height: 0; padding: 0; width: 18px; }
+.login-card input { margin-bottom: 8px; }
+.login-card .button { border: 0; cursor: pointer; margin-top: 13px; }
+.form-message { color: var(--red); font-size: .8rem; }
+.admin-app:not([hidden]) { display: grid; gap: 32px; grid-template-columns: 220px minmax(0, 1fr); }
+.admin-sidebar { align-self: start; background: var(--ink); color: white; padding: 24px 18px; position: sticky; top: 18px; }
+.admin-sidebar .eyebrow { color: var(--yellow); margin: 0 0 13px 10px; }
+.admin-nav { display: grid; gap: 4px; }
+.admin-nav button { background: transparent; border: 0; color: #d7d2c8; cursor: pointer; font: inherit; font-size: .82rem; padding: 12px 10px; text-align: left; }
+.admin-nav button:hover, .admin-nav button[aria-current="page"] { background: var(--red); color: white; }
+.admin-content { min-width: 0; }
+.admin-userbar { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; margin-bottom: 34px; padding-bottom: 18px; }
+.admin-userbar .eyebrow { margin-bottom: 3px; }
+.admin-userbar strong { font-size: .9rem; }
+.admin-userbar .button { cursor: pointer; font-size: .76rem; }
+.admin-notice { background: #e8f0df; border-left: 4px solid #637159; font-size: .82rem; margin: -17px 0 26px; padding: 13px 16px; }
+.admin-notice.is-error { background: #f8e5e0; border-color: var(--red); color: #822616; }
+.admin-view { min-width: 0; }
+.view-heading { margin-bottom: 24px; }
+.view-heading .eyebrow { margin-bottom: 8px; }
+.view-heading h1 { font-size: clamp(2.6rem, 5vw, 4rem); margin: 0; }
+.summary-grid { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 22px; }
+.summary-card, .admin-card, .resource-card { background: var(--paper); border: 1px solid #eee8dd; padding: 21px; }
+.summary-card { display: grid; gap: 13px; }
+.summary-card span { color: #777169; font-size: .74rem; }
+.summary-card strong { font-family: Oswald, sans-serif; font-size: 2rem; }
+.admin-card, .resource-card { margin-bottom: 20px; }
+.card-heading { align-items: center; display: flex; gap: 18px; justify-content: space-between; margin-bottom: 17px; }
+.card-heading .eyebrow { margin-bottom: 5px; }
+.card-heading h2 { font-size: 1.55rem; }
+.card-heading .admin-muted { margin: 0; }
+.text-button { background: none; border: 0; cursor: pointer; padding: 8px 0; white-space: nowrap; }
+.table-wrap { overflow-x: auto; }
+.admin-table { border-collapse: collapse; font-size: .78rem; min-width: 560px; width: 100%; }
+.admin-table th, .admin-table td { border-bottom: 1px solid var(--line); padding: 11px 9px; text-align: left; vertical-align: middle; }
+.admin-table th { color: #777169; font-size: .68rem; letter-spacing: .04em; text-transform: uppercase; }
+.admin-table td select { background: var(--paper); border: 1px solid var(--line); color: var(--ink); font: inherit; min-height: 36px; padding: 6px; }
+.admin-empty { color: #777169; font-size: .82rem; padding: 17px 0; }
+.resource-grid { display: grid; gap: 20px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.resource-heading { margin-bottom: 15px; }
+.resource-heading h2 { font-size: 1.55rem; }
+.resource-form { border-bottom: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 18px; padding-bottom: 18px; }
+.resource-form .form-field { display: grid; gap: 6px; }
+.resource-form .form-field-wide { grid-column: 1 / -1; }
+.resource-form .form-actions { align-items: center; display: flex; gap: 12px; grid-column: 1 / -1; }
+.resource-form button { border: 0; cursor: pointer; min-height: 42px; }
+.resource-form button[type="submit"] { padding: 0 15px; }
+.resource-form .cancel-edit { background: transparent; color: #777169; cursor: pointer; }
+.resource-error { color: var(--red); font-size: .76rem; grid-column: 1 / -1; margin: 0; }
+.report-filter { align-items: end; background: var(--paper); display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; padding: 18px; }
+.report-filter label { display: grid; gap: 6px; min-width: 180px; }
+.report-filter .button { border: 0; cursor: pointer; min-height: 43px; }
+.report-filter + .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@media (max-width: 900px) {
+  .admin-app:not([hidden]) { grid-template-columns: 1fr; }
+  .admin-sidebar { padding: 14px; position: static; }
+  .admin-sidebar .eyebrow { margin-bottom: 8px; }
+  .admin-nav { display: flex; overflow-x: auto; }
+  .admin-nav button { flex: 0 0 auto; }
+}
+
+@media (max-width: 620px) {
+  .admin-topbar { min-height: 64px; padding: 10px 17px; }
+  .admin-topbar-title { display: none; }
+  .admin-back-link { font-size: .7rem; }
+  .admin-main { padding: 22px 15px 48px; }
+  .admin-userbar { align-items: flex-start; gap: 15px; }
+  .summary-grid, .resource-grid { grid-template-columns: 1fr; }
+  .summary-card { padding: 16px; }
+  .admin-card, .resource-card { padding: 16px; }
+  .resource-form { grid-template-columns: 1fr; }
+  .resource-form .form-field-wide, .resource-form .form-actions { grid-column: auto; }
+}

@@ -32,7 +32,7 @@ export function createApp() {
 
     response.set("Access-Control-Allow-Origin", origin);
     response.set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
-    response.set("Access-Control-Allow-Headers", "Content-Type, x-admin-key");
+    response.set("Access-Control-Allow-Headers", "Content-Type, x-admin-key, Authorization");
     response.set("Vary", "Origin");
     if (request.method === "OPTIONS") {
       response.sendStatus(204);
