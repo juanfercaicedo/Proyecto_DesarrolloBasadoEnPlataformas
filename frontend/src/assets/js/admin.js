@@ -522,7 +522,7 @@
           return;
         } else if (!raw && field.optional) {
           payload[field.key] = field.nullable ? null : undefined;
-        } else if (field.type === "number") {
+        } else if (field.type === "number" || field.type === "select") {
           payload[field.key] = Number(raw);
         } else if (field.type === "datetime-local") {
           payload[field.key] = new Date(raw).toISOString();
