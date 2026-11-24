@@ -16,7 +16,7 @@ La arquitectura es **cliente-servidor**: el navegador consume la API HTTPS. El b
 3. **Acceso a datos:** repositorios Prisma.
 4. **Persistencia:** PostgreSQL administrado por Render.
 
-El servidor verifica los productos y calcula los precios, y guarda cada pedido y sus detalles en una transacción. Las credenciales de base de datos y de administración permanecen en Render; no se publican en GitHub Pages.
+El servidor verifica los productos y calcula los precios; guarda cada pedido y sus detalles y descuenta ingredientes de lotes por fecha de vencimiento dentro de la misma transacción. Si falta una receta o inventario suficiente, el pedido se rechaza sin guardar cambios parciales. Las credenciales de base de datos y de administración permanecen en Render; no se publican en GitHub Pages.
 
 ## Desplegar en Render
 
@@ -27,6 +27,8 @@ El servidor verifica los productos y calcula los precios, y guarda cada pedido y
 El Blueprint configura `DATABASE_URL`, permite el origen del frontend actual y genera valores para `ADMIN_API_KEY` y `ADMIN_PASSWORD`. Si Render asigna una URL pública distinta, configura la variable de repositorio `BRASA_API_URL` en **GitHub → Settings → Secrets and variables → Actions → Variables** con la URL completa terminada en `/api`. Luego vuelve a ejecutar el workflow de Pages.
 
 > La configuración usa planes gratuitos para facilitar el primer despliegue. Render puede limitar o expirar sus bases gratuitas; revisa las condiciones vigentes y usa un plan con persistencia adecuada antes de aceptar pedidos reales. La base creada por este Blueprint es nueva: los datos de una instalación MySQL anterior no se migran automáticamente.
+>
+> El seed incluye recetas y cantidades iniciales **sintéticas para demostración**. Sustitúyelas por recetas y existencias reales antes de aceptar pedidos comerciales; el seed no repone lotes existentes.
 
 ## Publicar en GitHub Pages
 
@@ -41,6 +43,8 @@ Requiere Node.js 20 o posterior y una instancia PostgreSQL. Desde la raíz:
 ```powershell
 npm ci
 $env:DATABASE_URL = "postgresql://usuario:clave@localhost:5432/brasa_viva"
+$env:ADMIN_PASSWORD = "una-clave-local-segura-de-al-menos-12"
+$env:ADMIN_API_KEY = "una-clave-administrativa-local"
 npm run db:generate
 npm run db:push
 npm run db:seed
@@ -56,3 +60,20 @@ Sirve [`frontend/`](./frontend) con una extensión como Live Server en `http://l
 - `POST /api/orders`: registra un pedido; acepta `customer` (`name`, `phone`, `email`), `mode` (`Delivery`, `Para llevar` o `En restaurante`), `address` (obligatoria para Delivery) e `items` (`name`, `quantity`, `extra`).
 
 El total se calcula en el servidor en centavos. Las rutas administrativas requieren el encabezado `x-admin-key`; configura secretos propios en Render antes de habilitar su uso.
+
+Las listas administrativas aceptan `page` y `limit` (por defecto, página 1 con 50 registros; máximo 100) y responden con `pagination` junto con `data`. El cálculo de stock bajo excluye lotes vencidos.
+
+## Informes de auditoría
+
+Los diez informes, con hallazgos, correcciones y límites de validación, están en [`frontend/src/assets/documentation/auditorias/`](./frontend/src/assets/documentation/auditorias/):
+
+1. [Privacidad de clientes](./frontend/src/assets/documentation/auditorias/auditoria-01-privacidad-clientes.md)
+2. [Gestión de secretos](./frontend/src/assets/documentation/auditorias/auditoria-02-gestion-secretos.md)
+3. [Validación de pedidos](./frontend/src/assets/documentation/auditorias/auditoria-03-validacion-pedidos.md)
+4. [Accesibilidad](./frontend/src/assets/documentation/auditorias/auditoria-04-accesibilidad.md)
+5. [Stock y vencimientos](./frontend/src/assets/documentation/auditorias/auditoria-05-stock-y-vencimientos.md)
+6. [Integridad de datos](./frontend/src/assets/documentation/auditorias/auditoria-06-integridad-de-datos.md)
+7. [Respuestas de la API](./frontend/src/assets/documentation/auditorias/auditoria-07-respuestas-api.md)
+8. [Categorías del catálogo](./frontend/src/assets/documentation/auditorias/auditoria-08-categorias-catalogo.md)
+9. [Paginación administrativa](./frontend/src/assets/documentation/auditorias/auditoria-09-paginacion-administrativa.md)
+10. [Integración continua](./frontend/src/assets/documentation/auditorias/auditoria-10-integracion-continua.md)

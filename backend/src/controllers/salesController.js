@@ -1,4 +1,5 @@
 import { prisma } from "../database/prisma.js";
+import { parsePagination } from "../services/resourceService.js";
 
 export const salesController = {
   summary: async (request, response, next) => {
@@ -24,13 +25,29 @@ export const salesController = {
   },
   list: async (request, response, next) => {
     try {
-      const status = request.query.status ? Number(request.query.status) : undefined;
-      const orders = await prisma.pedido.findMany({
-        where: status ? { id_estado_pedido: status } : undefined,
-        include: { detalles: { include: { producto: true } }, pago: true },
-        orderBy: { fecha_hora: "desc" },
+      const { page, limit, skip, take } = parsePagination(request.query);
+      let where;
+      if (request.query.status !== undefined) {
+        const status = request.query.status;
+        if (typeof status !== "string" || !/^[1-9]\d*$/.test(status) || !Number.isSafeInteger(Number(status))) {
+          return response.status(400).json({ error: "El estado debe ser un identificador entero positivo." });
+        }
+        where = { id_estado_pedido: Number(status) };
+      }
+      const [orders, total] = await Promise.all([
+        prisma.pedido.findMany({
+          where,
+          skip,
+          take,
+          orderBy: { fecha_hora: "desc" },
+          include: { detalles: { include: { producto: true } }, pago: true },
+        }),
+        prisma.pedido.count({ where }),
+      ]);
+      response.json({
+        data: orders,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
       });
-      response.json({ data: orders });
     } catch (error) {
       next(error);
     }

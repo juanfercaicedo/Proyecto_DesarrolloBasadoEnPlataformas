@@ -15,7 +15,15 @@ export async function listProducts() {
 
   return catalog.flatMap((entry) => {
     const product = productsByName.get(entry.name);
-    if (!product) return [];
+    if (!product || !product.recetas.length) return [];
+    const canPrepare = product.recetas.every((recipe) => {
+      const availableMilli = recipe.ingrediente.lotes.reduce(
+        (sum, lot) => sum + Math.round(Number(lot.cantidad_disponible) * 1000),
+        0,
+      );
+      return availableMilli >= Math.round(Number(recipe.cantidad_necesaria) * 1000);
+    });
+    if (!canPrepare) return [];
 
     return [{
       ...entry,

@@ -7,6 +7,19 @@ const [{ createApp }, { models, prisma, Prisma }] = await Promise.all([
   import("../app.js"),
   import("../models/index.js"),
 ]);
+const [
+  { createResourceService },
+  { calculateCurrentStock },
+  { consumeIngredientStock },
+  { AppError },
+  { errorHandler },
+] = await Promise.all([
+  import("../services/resourceService.js"),
+  import("../controllers/inventoryController.js"),
+  import("../services/orderService.js"),
+  import("../errors/AppError.js"),
+  import("../middlewares/errorHandler.js"),
+]);
 const server = createServer(createApp());
 server.listen(0, "127.0.0.1");
 await once(server, "listening");
@@ -107,4 +120,163 @@ test("exige dirección para delivery antes de conectar a la base de datos", asyn
 
   assert.equal(response.status, 400);
   assert.match(body.error, /dirección es obligatoria/);
+});
+
+test("rechaza direcciones que exceden el tamaño que se puede guardar", async () => {
+  const response = await fetch(`${baseUrl}/api/orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      customer: { name: "Ana Pérez", phone: "123456789", email: "ana@example.com" },
+      mode: "Delivery",
+      address: "C".repeat(256),
+      items: [{ name: "La Brasa", quantity: 1, extra: 0 }],
+    }),
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.match(body.error, /entre 5 y 255 caracteres/);
+});
+
+test("rechaza pedidos que superan el máximo de 99 unidades por producto", async () => {
+  const response = await fetch(`${baseUrl}/api/orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      customer: { name: "Ana Pérez", phone: "123456789", email: "ana@example.com" },
+      mode: "Para llevar",
+      items: [{ name: "La Brasa", quantity: 100, extra: 0 }],
+    }),
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.match(body.error, /producto del pedido no es válido/);
+});
+
+test("rechaza cantidades negativas en recursos administrativos", async () => {
+  process.env.ADMIN_API_KEY = "test-admin-key";
+  const response = await fetch(`${baseUrl}/api/ingredients`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-key": process.env.ADMIN_API_KEY,
+    },
+    body: JSON.stringify({
+      nombre: "Harina",
+      unidad_medida: "KG",
+      stock_minimo: -1,
+    }),
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.match(body.error, /stock_minimo debe ser un número/);
+  delete process.env.ADMIN_API_KEY;
+});
+
+test("pagina recursos y limita el tamaño de página", async () => {
+  const service = createResourceService({
+    delegate: {
+      findMany: async (options) => [options],
+      count: async () => 205,
+    },
+    idField: "id_ingrediente",
+    fields: ["nombre"],
+    name: "Ingrediente",
+  });
+
+  const result = await service.list({ page: "3", limit: "25" });
+  assert.deepEqual(result.records, [{ skip: 50, take: 25, orderBy: { id_ingrediente: "asc" } }]);
+  assert.deepEqual(result.pagination, { page: 3, limit: 25, total: 205, totalPages: 9 });
+  await assert.rejects(service.list({ limit: "101" }), { statusCode: 400 });
+  await assert.rejects(
+    createResourceService({
+      delegate: {},
+      idField: "id_producto",
+      fields: ["id_usuario_admin"],
+      name: "Producto",
+    }).create({ id_usuario_admin: null }),
+    { statusCode: 400 },
+  );
+});
+
+test("no incluye en el stock utilizable los lotes vencidos", () => {
+  const today = new Date("2026-11-23T12:00:00.000Z");
+  const stock = calculateCurrentStock([
+    { fecha_vencimiento: new Date("2026-11-22T00:00:00.000Z"), cantidad_disponible: "20.000" },
+    { fecha_vencimiento: new Date("2026-11-23T00:00:00.000Z"), cantidad_disponible: "3.500" },
+    { fecha_vencimiento: new Date("2026-11-30T00:00:00.000Z"), cantidad_disponible: "2.000" },
+  ], today);
+
+  assert.equal(stock, 5.5);
+});
+
+test("consume primero los lotes más antiguos y conserva la precisión de milésimas", async () => {
+  const balances = new Map([[1, 1], [2, 2]]);
+  const transaction = {
+    loteIngrediente: {
+      findMany: async ({ where, orderBy }) => {
+        assert.deepEqual(orderBy, [{ fecha_vencimiento: "asc" }, { id_lote: "asc" }]);
+        assert.equal(where.fecha_vencimiento.gte.toISOString(), "2026-11-23T00:00:00.000Z");
+        return [...balances].map(([id_lote, amount]) => ({
+          id_lote,
+          cantidad_disponible: amount.toFixed(3),
+        }));
+      },
+      updateMany: async ({ where, data }) => {
+        const required = data.cantidad_disponible.decrement;
+        const available = balances.get(where.id_lote);
+        if (available < required) return { count: 0 };
+        balances.set(where.id_lote, available - required);
+        return { count: 1 };
+      },
+    },
+  };
+
+  await consumeIngredientStock(transaction, [
+    { id_ingrediente: 1, name: "Carne", quantityMilli: 2500 },
+  ], new Date("2026-11-23T12:00:00.000Z"));
+
+  assert.equal(balances.get(1), 0);
+  assert.equal(balances.get(2), 0.5);
+});
+
+test("devuelve el detalle del ingrediente cuando el pedido queda sin stock", () => {
+  let statusCode;
+  let responseBody;
+  errorHandler(
+    new AppError(409, "Inventario insuficiente para Carne."),
+    {},
+    {
+      status(code) {
+        statusCode = code;
+        return this;
+      },
+      json(body) {
+        responseBody = body;
+      },
+    },
+    () => {},
+  );
+
+  assert.equal(statusCode, 409);
+  assert.equal(responseBody.error, "Inventario insuficiente para Carne.");
+});
+
+test("rechaza el pedido si no hay suficiente inventario", async () => {
+  const transaction = {
+    loteIngrediente: {
+      findMany: async () => [{ id_lote: 1, cantidad_disponible: "0.500" }],
+      updateMany: async () => ({ count: 0 }),
+    },
+  };
+
+  await assert.rejects(
+    consumeIngredientStock(transaction, [
+      { id_ingrediente: 1, name: "Carne", quantityMilli: 1000 },
+    ]),
+    { statusCode: 409, message: "Inventario insuficiente para Carne." },
+  );
 });

@@ -8,8 +8,11 @@ export function createResourceController(model) {
     return data;
   };
   return {
-    list: async (_request, response, next) => {
-      try { response.json({ data: (await service.list()).map(serialize) }); } catch (error) { next(error); }
+    list: async (request, response, next) => {
+      try {
+        const result = await service.list(request.query);
+        response.json({ data: result.records.map(serialize), pagination: result.pagination });
+      } catch (error) { next(error); }
     },
     get: async (request, response, next) => {
       try { response.json({ data: serialize(await service.get(request.params.id)) }); } catch (error) { next(error); }

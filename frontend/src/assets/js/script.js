@@ -66,6 +66,14 @@
       maximumFractionDigits: 2,
     }).format(value / 100);
 
+  function getProductCategory(product) {
+    return product.category
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "");
+  }
+
   function isValidCartItem(item) {
     if (
       !item ||
@@ -73,7 +81,8 @@
       !Number.isSafeInteger(item.price) ||
       !Number.isSafeInteger(item.extra) ||
       !Number.isSafeInteger(item.quantity) ||
-      item.quantity < 1
+      item.quantity < 1 ||
+      item.quantity > 99
     ) {
       return false;
     }
@@ -240,7 +249,7 @@
     products.forEach((product, index) => {
       const card = document.createElement("article");
       card.className = `product-card${index === 0 ? " featured-card" : ""}`;
-      card.dataset.category = "hamburguesas";
+      card.dataset.category = getProductCategory(product);
       card.dataset.product = product.name;
       card.dataset.price = String(product.price);
 
@@ -292,6 +301,8 @@
         Number.isSafeInteger(product.price) &&
         product.price >= 0 &&
         typeof product.description === "string" &&
+        typeof product.category === "string" &&
+        product.category.trim().length > 0 &&
         typeof product.image === "string" &&
         typeof product.imageAlt === "string" &&
         typeof product.badge === "string" &&
@@ -316,6 +327,10 @@
     );
 
     if (existing) {
+      if (existing.quantity >= 99) {
+        liveRegion.textContent = `No puedes agregar más de 99 unidades de ${name}.`;
+        return;
+      }
       existing.quantity += 1;
     } else {
       cart.push({ name, price, extra, customization: label, quantity: 1 });
@@ -367,6 +382,10 @@
     if (!item || !Number.isInteger(index)) return;
 
     const action = button.dataset.action;
+    if (action === "increase" && item.quantity >= 99) {
+      liveRegion.textContent = `No puedes agregar más de 99 unidades de ${item.name}.`;
+      return;
+    }
     const itemName = item.name;
     item.quantity += button.dataset.action === "increase" ? 1 : -1;
     const itemRemoved = item.quantity <= 0;
@@ -410,9 +429,9 @@
     }
     if (event.key !== "Tab") return;
 
-    const focusableElements = drawer.querySelectorAll(
+    const focusableElements = Array.from(drawer.querySelectorAll(
       'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
-    );
+    )).filter((element) => !element.closest("[hidden]"));
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
 
@@ -426,6 +445,19 @@
   });
 
   const emailPattern = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/;
+
+  async function readApiResponse(response) {
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error("El servidor devolvió una respuesta inválida.");
+    }
+    if (!result || typeof result !== "object" || Array.isArray(result)) {
+      throw new Error("El servidor devolvió una respuesta inválida.");
+    }
+    return result;
+  }
 
   function validateEmail() {
     const email = customerEmail.value.trim();
@@ -524,7 +556,7 @@
           })),
         }),
       });
-      const result = await response.json();
+      const result = await readApiResponse(response);
       if (!response.ok) {
         throw new Error(result.error ?? "No fue posible registrar el pedido.");
       }
@@ -553,7 +585,7 @@
         throw new Error(`Error al cargar el catálogo: ${response.status}`);
       }
 
-      const result = await response.json();
+      const result = await readApiResponse(response);
       const products = result.products;
       if (!Array.isArray(products) || !products.every(isValidProduct)) {
         throw new Error("El catálogo de hamburguesas tiene un formato inválido.");

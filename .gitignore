@@ -1,4 +1,6 @@
 .env
+.env.*
+!.env.example
 node_modules/
 backend/prisma/*.db
 backend/prisma/*.db-journal

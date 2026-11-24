@@ -11,6 +11,57 @@ const orderModes = new Map([
 const phonePattern = /^[0-9]{7,15}$/;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function startOfUtcDay(date) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+export async function consumeIngredientStock(transaction, requirements, today = new Date()) {
+  const grouped = new Map();
+  for (const requirement of requirements) {
+    const current = grouped.get(requirement.id_ingrediente) ?? {
+      name: requirement.name,
+      quantityMilli: 0,
+    };
+    current.quantityMilli += requirement.quantityMilli;
+    grouped.set(requirement.id_ingrediente, current);
+  }
+
+  const currentDay = startOfUtcDay(today);
+  for (const [ingredientId, requirement] of [...grouped].sort(([left], [right]) => left - right)) {
+    let remainingMilli = requirement.quantityMilli;
+    const lots = await transaction.loteIngrediente.findMany({
+      where: {
+        id_ingrediente: ingredientId,
+        fecha_vencimiento: { gte: currentDay },
+        cantidad_disponible: { gt: 0 },
+      },
+      orderBy: [{ fecha_vencimiento: "asc" }, { id_lote: "asc" }],
+      select: { id_lote: true, cantidad_disponible: true },
+    });
+
+    for (const lot of lots) {
+      const availableMilli = Math.round(Number(lot.cantidad_disponible) * 1000);
+      const amountMilli = Math.min(availableMilli, remainingMilli);
+      if (amountMilli <= 0) continue;
+
+      const amount = amountMilli / 1000;
+      const result = await transaction.loteIngrediente.updateMany({
+        where: {
+          id_lote: lot.id_lote,
+          cantidad_disponible: { gte: amount },
+        },
+        data: { cantidad_disponible: { decrement: amount } },
+      });
+      if (result.count === 1) remainingMilli -= amountMilli;
+      if (remainingMilli === 0) break;
+    }
+
+    if (remainingMilli > 0) {
+      throw new AppError(409, `Inventario insuficiente para ${requirement.name}.`);
+    }
+  }
+}
+
 function validatePayload(payload) {
   if (!payload || typeof payload !== "object") {
     throw new AppError(400, "El cuerpo del pedido no es válido.");
@@ -28,8 +79,12 @@ function validatePayload(payload) {
   if (!orderModes.has(payload.mode)) {
     throw new AppError(400, "El tipo de pedido no es válido.");
   }
-  if (payload.mode === "Delivery" && (typeof payload.address !== "string" || payload.address.trim().length < 5)) {
-    throw new AppError(400, "La dirección es obligatoria para pedidos a domicilio.");
+  if (payload.mode === "Delivery" && (
+    typeof payload.address !== "string" ||
+    payload.address.trim().length < 5 ||
+    payload.address.trim().length > 255
+  )) {
+    throw new AppError(400, "La dirección es obligatoria para pedidos a domicilio y debe tener entre 5 y 255 caracteres.");
   }
   if (!Array.isArray(payload.items) || payload.items.length < 1 || payload.items.length > 30) {
     throw new AppError(400, "El pedido debe contener entre 1 y 30 productos.");
@@ -66,18 +121,17 @@ export async function createOrder(payload) {
         telefono: payload.customer.phone,
         contrasena_hash: await bcrypt.hash(randomBytes(32).toString("hex"), 10),
       },
-      update: {
-        nombres: firstName,
-        apellidos: lastNames.join(" ") || "Cliente",
-        telefono: payload.customer.phone,
-      },
+      update: {},
     });
 
+    const productNames = [...new Set(payload.items.map((item) => item.name))];
+    const products = await transaction.producto.findMany({
+      where: { nombre: { in: productNames }, disponible: true },
+    });
+    const productsByName = new Map(products.map((product) => [product.nombre, product]));
     const details = [];
     for (const item of payload.items) {
-      const product = await transaction.producto.findFirst({
-        where: { nombre: item.name, disponible: true },
-      });
+      const product = productsByName.get(item.name);
       if (!product) throw new AppError(400, `El producto ${item.name} no está disponible.`);
 
       const unitPrice = Math.round(Number(product.precio_venta_actual) * 100) + item.extra;
@@ -86,8 +140,54 @@ export async function createOrder(payload) {
         cantidad: item.quantity,
         precio_unitario_historico: (unitPrice / 100).toFixed(2),
         subtotal: unitPrice * item.quantity,
+        extra: item.extra,
       });
     }
+
+    const productIds = [...new Set(details.map((detail) => detail.id_producto))];
+    const recipes = await transaction.receta.findMany({
+      where: { id_producto: { in: productIds } },
+      select: {
+        id_producto: true,
+        id_ingrediente: true,
+        cantidad_necesaria: true,
+        ingrediente: { select: { nombre: true } },
+      },
+    });
+    const recipesByProduct = new Map();
+    for (const recipe of recipes) {
+      const productRecipes = recipesByProduct.get(recipe.id_producto) ?? [];
+      productRecipes.push(recipe);
+      recipesByProduct.set(recipe.id_producto, productRecipes);
+    }
+    const requirements = [];
+    for (const detail of details) {
+      const productRecipes = recipesByProduct.get(detail.id_producto);
+      if (!productRecipes?.length) {
+        throw new AppError(503, "Falta configurar la receta de un producto. Ejecuta npm run db:seed.");
+      }
+      for (const recipe of productRecipes) {
+        requirements.push({
+          id_ingrediente: recipe.id_ingrediente,
+          name: recipe.ingrediente.nombre,
+          quantityMilli: Math.round(Number(recipe.cantidad_necesaria) * 1000) * detail.cantidad,
+        });
+      }
+      if (detail.extra > 0) {
+        const cheeseRecipe = productRecipes.find((recipe) =>
+          recipe.ingrediente.nombre.startsWith("Queso "),
+        );
+        if (!cheeseRecipe) {
+          throw new AppError(503, "Falta configurar el queso extra en la receta del producto.");
+        }
+        requirements.push({
+          id_ingrediente: cheeseRecipe.id_ingrediente,
+          name: cheeseRecipe.ingrediente.nombre,
+          quantityMilli: 30 * detail.cantidad,
+        });
+      }
+    }
+    await consumeIngredientStock(transaction, requirements);
 
     const total = details.reduce((sum, item) => sum + item.subtotal, 0);
     const order = await transaction.pedido.create({
@@ -99,7 +199,7 @@ export async function createOrder(payload) {
         total: (total / 100).toFixed(2),
         direccion_entrega: payload.mode === "Delivery" ? payload.address.trim() : null,
         detalles: {
-          create: details.map(({ subtotal: _subtotal, ...detail }) => detail),
+          create: details.map(({ subtotal: _subtotal, extra: _extra, ...detail }) => detail),
         },
       },
       include: { detalles: true },

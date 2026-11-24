@@ -12,7 +12,9 @@ export function errorHandler(error, _request, response, _next) {
   const detail = statusCode === 400
     ? error.message
     : statusCode === 409
-      ? "El registro entra en conflicto con datos existentes o relaciones dependientes."
+      ? (Number.isInteger(error.statusCode)
+        ? error.message
+        : "El registro entra en conflicto con datos existentes o relaciones dependientes.")
       : null;
   response.status(statusCode).json({ error: detail || message });
 }
