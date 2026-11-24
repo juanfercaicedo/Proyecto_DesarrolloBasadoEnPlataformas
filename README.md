@@ -61,7 +61,7 @@ Sirve [`frontend/`](./frontend) con una extensión como Live Server en `http://l
 
 El total se calcula en el servidor en centavos. Las rutas administrativas requieren el encabezado `x-admin-key`; configura secretos propios en Render antes de habilitar su uso.
 
-Las listas administrativas aceptan `page` y `limit` (por defecto, página 1 con 50 registros; máximo 100) y responden con `pagination` junto con `data`. El cálculo de stock bajo excluye lotes vencidos.
+Las listas CRUD administrativas, `/api/sales` y `/api/inventory/lots` aceptan `page` y `limit` (por defecto, página 1 con 50 registros; máximo 100) y responden con `pagination` junto con `data`. `/api/inventory/low-stock` devuelve el resumen completo por ingrediente. El cálculo de stock bajo excluye lotes vencidos.
 
 ## Informes de auditoría
 
