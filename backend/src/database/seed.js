@@ -4,7 +4,9 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { prisma } from "./prisma.js";
 
-const catalogPath = fileURLToPath(new URL("../../assets/data/hamburguesas.json", import.meta.url));
+const catalogPath = fileURLToPath(
+  new URL("../../../frontend/src/assets/data/hamburguesas.json", import.meta.url),
+);
 
 try {
   const adminRole = await prisma.rol.upsert({

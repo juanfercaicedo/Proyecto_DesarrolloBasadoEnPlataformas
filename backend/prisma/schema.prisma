@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -79,7 +79,7 @@ model LoteIngrediente {
   id_ingrediente      Int
   id_usuario_admin    Int
   codigo_lote         String      @unique @db.VarChar(80)
-  fecha_ingreso       DateTime    @db.DateTime(0)
+  fecha_ingreso       DateTime    @db.Timestamp(0)
   fecha_vencimiento   DateTime    @db.Date
   cantidad_inicial    Decimal     @db.Decimal(10, 3)
   cantidad_disponible Decimal     @db.Decimal(10, 3)
@@ -126,7 +126,7 @@ model Pedido {
   id_usuario        Int
   id_tipo_pedido    Int
   id_estado_pedido  Int
-  fecha_hora        DateTime        @default(now()) @db.DateTime(0)
+  fecha_hora        DateTime        @default(now()) @db.Timestamp(0)
   total             Decimal         @db.Decimal(10, 2)
   direccion_entrega String?         @db.VarChar(255)
   cliente           Usuario         @relation(fields: [id_usuario], references: [id_usuario])
@@ -173,7 +173,7 @@ model Pago {
   id_usuario_admin Int?
   monto            Decimal    @db.Decimal(10, 2)
   referencia_banco String?    @db.VarChar(120)
-  fecha_pago       DateTime   @default(now()) @db.DateTime(0)
+  fecha_pago       DateTime   @default(now()) @db.Timestamp(0)
   pedido           Pedido     @relation(fields: [id_pedido], references: [id_pedido])
   metodo           MetodoPago @relation(fields: [id_metodo_pago], references: [id_metodo_pago])
   administrador    Usuario?   @relation("ValidaPago", fields: [id_usuario_admin], references: [id_usuario])
@@ -186,7 +186,7 @@ model Pago {
 model Factura {
   id_factura           Int      @id @default(autoincrement())
   id_pedido            Int      @unique
-  fecha_emision        DateTime @default(now()) @db.DateTime(0)
+  fecha_emision        DateTime @default(now()) @db.Timestamp(0)
   ruc_cedula_cliente   String   @db.VarChar(20)
   razon_social         String   @db.VarChar(150)
   subtotal_facturado   Decimal  @db.Decimal(10, 2)
@@ -210,7 +210,7 @@ model OrdenSalida {
   id_pedido           Int         @unique
   id_usuario_despacha Int?
   id_estado_orden     Int
-  fecha_despacho      DateTime?   @db.DateTime(0)
+  fecha_despacho      DateTime?   @db.Timestamp(0)
   pedido              Pedido      @relation(fields: [id_pedido], references: [id_pedido])
   despachador         Usuario?    @relation("DespachaOrden", fields: [id_usuario_despacha], references: [id_usuario])
   estado              EstadoOrden @relation(fields: [id_estado_orden], references: [id_estado_orden])

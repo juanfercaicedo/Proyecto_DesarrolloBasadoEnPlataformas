@@ -27,6 +27,33 @@ test("expone el estado de salud sin requerir una base de datos", async () => {
   assert.equal(body.status, "ok");
 });
 
+test("permite el origen de GitHub Pages y responde solicitudes CORS", async () => {
+  const response = await fetch(`${baseUrl}/api/health`, {
+    method: "OPTIONS",
+    headers: {
+      Origin: "https://juanfercaicedo.github.io",
+      "Access-Control-Request-Method": "POST",
+    },
+  });
+
+  assert.equal(response.status, 204);
+  assert.equal(
+    response.headers.get("access-control-allow-origin"),
+    "https://juanfercaicedo.github.io",
+  );
+  assert.match(response.headers.get("access-control-allow-methods"), /POST/);
+});
+
+test("rechaza orígenes web que no estén configurados", async () => {
+  const response = await fetch(`${baseUrl}/api/health`, {
+    headers: { Origin: "https://sitio-no-autorizado.example" },
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 403);
+  assert.match(body.error, /origen no está autorizado/);
+});
+
 test("registra las 16 entidades y las relaciones Prisma del pedido", () => {
   assert.equal(Object.keys(models).length, 16);
   const pedido = Prisma.dmmf.datamodel.models.find((model) => model.name === "Pedido");
@@ -66,7 +93,7 @@ test("rechaza el alta de usuarios sin contraseña", async () => {
   delete process.env.ADMIN_API_KEY;
 });
 
-test("exige dirección para delivery antes de conectar a MySQL", async () => {
+test("exige dirección para delivery antes de conectar a la base de datos", async () => {
   const response = await fetch(`${baseUrl}/api/orders`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: brasa-viva-api
+    runtime: node
+    buildCommand: npm ci && npm run db:generate
+    startCommand: npm run db:push && npm run db:seed && npm start
+    healthCheckPath: /api/health
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: brasa-viva-db
+          property: connectionString
+      - key: FRONTEND_ORIGINS
+        value: https://juanfercaicedo.github.io
+      - key: ADMIN_API_KEY
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      - key: ADMIN_EMAIL
+        value: admin@brasaviva.local
+
+databases:
+  - name: brasa-viva-db
+    databaseName: brasa_viva
+    user: brasaviva
+    plan: free

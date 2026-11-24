@@ -2,7 +2,9 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { findAvailableProducts } from "../repositories/productRepository.js";
 
-const catalogPath = fileURLToPath(new URL("../../assets/data/hamburguesas.json", import.meta.url));
+const catalogPath = fileURLToPath(
+  new URL("../../../frontend/src/assets/data/hamburguesas.json", import.meta.url),
+);
 
 export async function listProducts() {
   const [catalog, products] = await Promise.all([

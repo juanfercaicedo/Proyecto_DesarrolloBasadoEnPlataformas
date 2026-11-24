@@ -1,5 +1,4 @@
 .env
 node_modules/
-src/backend/data/orders.json
-prisma/*.db
-prisma/*.db-journal
+backend/prisma/*.db
+backend/prisma/*.db-journal

@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:seed": "node src/backend/database/seed.js",
+    "start": "node backend/server.js",
+    "dev": "node --watch backend/server.js",
+    "db:generate": "prisma generate --schema backend/prisma/schema.prisma",
+    "db:push": "prisma db push --schema backend/prisma/schema.prisma",
+    "db:seed": "node backend/src/database/seed.js",
     "test": "node --test"
   },
   "engines": {

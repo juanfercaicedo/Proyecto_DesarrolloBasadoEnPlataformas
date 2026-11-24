@@ -31,8 +31,16 @@ jobs:
       - name: Preparar archivos del sitio
         run: |
           mkdir -p _site
-          cp index.html _site/index.html
-          cp -R src _site/src
+          cp frontend/index.html _site/index.html
+          cp -R frontend/src _site/src
+
+      - name: Aplicar URL personalizada de la API
+        env:
+          BRASA_API_URL: ${{ vars.BRASA_API_URL }}
+        run: |
+          if [ -n "$BRASA_API_URL" ]; then
+            python -c 'import json, os; open("_site/src/assets/js/config.js", "w", encoding="utf-8").write("window.BRASA_API_URL = " + json.dumps(os.environ["BRASA_API_URL"].rstrip("/")) + ";\n")'
+          fi
 
       - name: Cargar archivos del sitio
         uses: actions/upload-pages-artifact@v3

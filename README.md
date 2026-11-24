@@ -1,45 +1,58 @@
 # Proyecto_DesarrolloBasadoEnPlataformas
 
-- Sitio publicado en [GitHub Pages](https://juanfercaicedo.github.io/Proyecto_DesarrolloBasadoEnPlataformas/)
+Sitio de Brasa Viva publicado en [GitHub Pages](https://juanfercaicedo.github.io/Proyecto_DesarrolloBasadoEnPlataformas/).
 
-## Backend local
+## Arquitectura
 
-El proyecto utiliza Node.js, Express y Prisma ORM como un **monolito cliente-servidor**: el mismo proceso sirve la página, los recursos estáticos y la API. Prisma conecta con MySQL y define las 16 entidades del esquema de `ModeloBaseDatos.md` en `prisma/schema.prisma`. La organización es MVC con capas de persistencia y negocio:
+El repositorio separa las aplicaciones por responsabilidad:
 
-- `models`: acceso al cliente Prisma y definición de recursos.
-- `routes`: define las rutas HTTP.
-- `controllers`: controladores por recurso (ingredientes, lotes, productos, pedidos, ventas, usuarios, pagos, facturas, etc.).
-- `services`: aplica validaciones y reglas del negocio.
-- `repositories`: encapsula consultas y operaciones ORM.
-- `middlewares` y `errors`: centralizan el manejo de errores.
+- [`frontend/`](./frontend): sitio estático HTML, CSS y JavaScript; se publica en GitHub Pages.
+- [`backend/`](./backend): API Node.js/Express y PostgreSQL/Prisma; se despliega como un servicio independiente en Render.
 
-### Iniciar
+La arquitectura es **cliente-servidor**: el navegador consume la API HTTPS. El backend se mantiene como un **monolito modular** (una sola aplicación desplegable) con capas:
 
-Se requiere Node.js 20 o posterior y un servidor MySQL. El archivo `.env` local está preparado para MySQL en `localhost:3306` con el usuario `root` y contraseña vacía. Ajusta `DATABASE_URL` si tu instalación usa otras credenciales. Los valores `ADMIN_API_KEY` y `ADMIN_PASSWORD` incluidos son solo para desarrollo local: reemplázalos antes de exponer o desplegar el sistema.
+1. **Presentación/API:** rutas y controladores HTTP.
+2. **Negocio:** servicios que validan pedidos y aplican reglas.
+3. **Acceso a datos:** repositorios Prisma.
+4. **Persistencia:** PostgreSQL administrado por Render.
 
-```sql
-CREATE DATABASE brasa_viva CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
+El servidor verifica los productos y calcula los precios, y guarda cada pedido y sus detalles en una transacción. Las credenciales de base de datos y de administración permanecen en Render; no se publican en GitHub Pages.
 
-```bash
-npm install
+## Desplegar en Render
+
+1. En Render, crea un **Blueprint** y conecta este repositorio. Render detectará [`render.yaml`](./render.yaml) y creará el servicio web `brasa-viva-api` junto con la base de datos PostgreSQL `brasa-viva-db`.
+2. Confirma la creación y espera a que el despliegue termine. El primer arranque genera las tablas con Prisma y carga los datos iniciales.
+3. Verifica la API en `https://brasa-viva-api.onrender.com/api/health`; debe responder `{"status":"ok"}`.
+
+El Blueprint configura `DATABASE_URL`, permite el origen del frontend actual y genera valores para `ADMIN_API_KEY` y `ADMIN_PASSWORD`. Si Render asigna una URL pública distinta, configura la variable de repositorio `BRASA_API_URL` en **GitHub → Settings → Secrets and variables → Actions → Variables** con la URL completa terminada en `/api`. Luego vuelve a ejecutar el workflow de Pages.
+
+> La configuración usa planes gratuitos para facilitar el primer despliegue. Render puede limitar o expirar sus bases gratuitas; revisa las condiciones vigentes y usa un plan con persistencia adecuada antes de aceptar pedidos reales. La base creada por este Blueprint es nueva: los datos de una instalación MySQL anterior no se migran automáticamente.
+
+## Publicar en GitHub Pages
+
+El workflow [`pages.yml`](./.github/workflows/pages.yml) publica solo `frontend/`. Se ejecuta al actualizar `main` o manualmente desde **GitHub → Actions → Publicar en GitHub Pages → Run workflow**. La URL predeterminada de la API es `https://brasa-viva-api.onrender.com/api`; `BRASA_API_URL` solo es necesaria si Render asigna otra URL.
+
+Si utilizas un dominio personalizado para Pages, agrega su origen (protocolo y dominio, sin ruta) a `FRONTEND_ORIGINS` en la configuración del servicio Render.
+
+## Desarrollo local
+
+Requiere Node.js 20 o posterior y una instancia PostgreSQL. Desde la raíz:
+
+```powershell
+npm ci
+$env:DATABASE_URL = "postgresql://usuario:clave@localhost:5432/brasa_viva"
 npm run db:generate
 npm run db:push
 npm run db:seed
 npm start
 ```
 
-`db:push` crea o actualiza las tablas según el esquema Prisma, y el seed carga roles, categorías, estados, métodos de pago, ingredientes y productos del catálogo JSON. Abre `http://localhost:3000`. Para desarrollo con reinicio automático usa `npm run dev`; las pruebas que no requieren una base externa se ejecutan con `npm test`.
+Sirve [`frontend/`](./frontend) con una extensión como Live Server en `http://localhost:5500`. El backend acepta ese origen local. Para reiniciar automáticamente el backend, usa `npm run dev`; las pruebas automatizadas se ejecutan con `npm test`.
 
-### API
+## API principal
 
-- `GET /api/health`: estado del servidor.
-- `GET /api/products`: catálogo disponible, con precios consultados desde MySQL.
-- `POST /api/orders`: registra el checkout de invitado y sus detalles en una transacción. Acepta `customer` (`name`, `phone`, `email`), `mode` (`Delivery`, `Para llevar` o `En restaurante`), `address` (obligatoria en Delivery) e `items` (`name`, `quantity`, `extra`). El extra aceptado es `0` o `150` centavos por queso adicional; el campo `order.total` de la respuesta está expresado en centavos.
-- CRUD por recurso: `/api/ingredients`, `/api/ingredient-lots`, `/api/products/manage`, `/api/orders/manage`, `/api/order-details`, `/api/users`, `/api/roles`, `/api/categories`, `/api/recipes`, `/api/order-types`, `/api/order-statuses`, `/api/payments`, `/api/payment-methods`, `/api/invoices`, `/api/dispatch-orders` y `/api/dispatch-statuses`.
-- `GET /api/inventory/low-stock` y `GET /api/inventory/lots`: existencias calculadas desde lotes y lotes ordenados por vencimiento.
-- `GET /api/sales` y `GET /api/sales/summary?since=...&until=...`: ventas y resumen por fechas.
+- `GET /api/health`: estado del servicio.
+- `GET /api/products`: catálogo disponible.
+- `POST /api/orders`: registra un pedido; acepta `customer` (`name`, `phone`, `email`), `mode` (`Delivery`, `Para llevar` o `En restaurante`), `address` (obligatoria para Delivery) e `items` (`name`, `quantity`, `extra`).
 
-Las rutas de administración requieren el encabezado `x-admin-key` con el valor de `ADMIN_API_KEY`. El endpoint público de checkout crea o reutiliza el cliente por correo; el servidor calcula los importes desde los precios de MySQL y no confía en totales del cliente.
-
-El stock disponible se calcula sumando `cantidad_disponible` de los lotes; no se almacena una columna redundante `stock_actual` en `INGREDIENTE`. `prisma db push` está pensado para desarrollo; antes de producción usa migraciones versionadas con `prisma migrate` y configura secretos propios. El `.env` está excluido de Git.
+El total se calcula en el servidor en centavos. Las rutas administrativas requieren el encabezado `x-admin-key`; configura secretos propios en Render antes de habilitar su uso.

@@ -1,4 +1,5 @@
 (() => {
+  const apiBaseUrl = window.BRASA_API_URL.replace(/\/+$/, "");
   const cart = [];
   const drawer = document.querySelector("#order-drawer");
   const cartList = document.querySelector("#cart-list");
@@ -509,7 +510,7 @@
     liveRegion.textContent = "Enviando tu pedido.";
 
     try {
-      const response = await fetch("/api/orders", {
+      const response = await fetch(`${apiBaseUrl}/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -547,7 +548,7 @@
 
   async function initializeProducts() {
     try {
-      const response = await fetch("/api/products");
+      const response = await fetch(`${apiBaseUrl}/products`);
       if (!response.ok) {
         throw new Error(`Error al cargar el catálogo: ${response.status}`);
       }
