@@ -22,6 +22,7 @@
   const deliveryAddress = document.querySelector("#delivery-address");
   const deliveryAddressField = document.querySelector("#delivery-address-field");
   const savedAddressSelect = document.querySelector("#saved-delivery-address");
+  const savedAddressLabel = document.querySelector("#saved-address-label");
   const saveAddressOption = document.querySelector("#save-address-option");
   const saveAddressCheckbox = document.querySelector("#save-delivery-address");
   const addressLabelInput = document.querySelector("#delivery-address-label");
@@ -532,6 +533,7 @@
       saveAddressCheckbox.checked = false;
     }
     savedAddressSelect.hidden = !isDelivery || !customerSession;
+    savedAddressLabel.hidden = savedAddressSelect.hidden;
     updateSaveAddressVisibility();
   }
 
@@ -570,7 +572,7 @@
     for (const address of savedAddresses) {
       const option = document.createElement("option");
       option.value = String(address.id);
-      option.textContent = `${address.label}: ${address.address}`;
+      option.textContent = `${address.label}: ${address.address}${address.reference ? ` (${address.reference})` : ""}`;
       savedAddressSelect.append(option);
     }
   }
@@ -605,6 +607,7 @@
       const result = await readApiResponse(response);
       customerSession = result.user;
       applyCustomerSession();
+      updateDeliveryAddress();
       await loadSavedAddresses(token);
       updateDeliveryAddress();
     } catch (error) {
@@ -732,14 +735,17 @@
       updateDeliveryAddress();
       if (shouldRefreshSavedAddresses) {
         const token = window.sessionStorage.getItem(customerSessionKey);
+        let addressRefreshWarning = false;
         try {
           await loadSavedAddresses(token);
         } catch (error) {
           console.error("El pedido se guardó, pero no se pudo actualizar la lista de direcciones.", error);
-          liveRegion.textContent = `Pedido ${result.order.id} recibido. No se pudo actualizar la lista de direcciones.`;
+          addressRefreshWarning = true;
         }
-      }
-      if (!liveRegion.textContent.includes("No se pudo actualizar la lista")) {
+        liveRegion.textContent = addressRefreshWarning
+          ? `Pedido ${result.order.id} recibido. No se pudo actualizar la lista de direcciones.`
+          : `Pedido ${result.order.id} recibido. Total ${formatPrice(result.order.total)}.`;
+      } else {
         liveRegion.textContent = `Pedido ${result.order.id} recibido. Total ${formatPrice(result.order.total)}.`;
       }
       window.alert(

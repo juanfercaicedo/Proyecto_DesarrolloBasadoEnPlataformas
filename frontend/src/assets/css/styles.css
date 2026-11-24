@@ -114,6 +114,9 @@ h2 { font-size: clamp(3rem, 5vw, 5rem); line-height: .9; margin-bottom: 0; }
 .save-address-option input[type="checkbox"] { min-height: 0; width: auto; }
 .checkout-account-link { font-size: .72rem; line-height: 1.5; margin: 18px 0 0; }
 .checkout-account-link a { border-bottom: 1px solid var(--red); color: var(--red); }
+.main-nav a.main-nav-account { background: var(--red); color: var(--red-foreground); padding: 11px 14px; }
+.main-nav a.main-nav-account:hover { background: var(--ink); color: var(--paper); }
+.main-nav.is-open a.main-nav-account { align-self: flex-start; margin: 8px 0; }
 
 :focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
 

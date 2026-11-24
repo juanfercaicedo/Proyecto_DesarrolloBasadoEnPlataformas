@@ -197,7 +197,13 @@ export async function createOrder(payload, customerSession = null) {
         if (!savedAddress) {
           throw new AppError(404, "No se encontró esa dirección en tu cuenta.");
         }
-        deliveryAddress = savedAddress.direccion;
+        deliveryAddress = [
+          savedAddress.direccion,
+          savedAddress.referencia,
+        ].filter(Boolean).join(" - ");
+        if (deliveryAddress.length > 255) {
+          throw new AppError(400, "La dirección y su referencia superan el límite permitido.");
+        }
       } else {
         deliveryAddress = payload.address.trim();
       }

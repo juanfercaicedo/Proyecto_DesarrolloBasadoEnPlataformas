@@ -29,6 +29,13 @@
     return window.sessionStorage.getItem(tokenKey);
   }
 
+  function saveSession(result) {
+    if (typeof result.token !== "string" || !result.user || typeof result.user.name !== "string") {
+      throw new Error("El servidor devolvió una sesión de cliente inválida.");
+    }
+    window.sessionStorage.setItem(tokenKey, result.token);
+  }
+
   async function api(path, { method = "GET", body } = {}) {
     const headers = {};
     const token = getToken();
@@ -120,7 +127,7 @@
       article.append(heading);
 
       const status = document.createElement("p");
-      status.textContent = `${order.status} · ${order.mode} · ${new Intl.NumberFormat("es-CO", {
+      status.textContent = `${order.status} · ${order.mode} · ${new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
       }).format(order.total)}`;
@@ -155,6 +162,14 @@
       api("/customer/addresses"),
       api("/customer/orders"),
     ]);
+    if (
+      !session.user ||
+      typeof session.user.name !== "string" ||
+      !Array.isArray(addresses.data) ||
+      !Array.isArray(orders.data)
+    ) {
+      throw new Error("El servidor devolvió información de cuenta inválida.");
+    }
     document.querySelector("#account-name").textContent = session.user.name;
     document.querySelector("#account-email").textContent = session.user.email;
     renderAddresses(addresses.data);
@@ -180,7 +195,7 @@
         }),
       });
       const result = await readResponse(response);
-      window.sessionStorage.setItem(tokenKey, result.token);
+      saveSession(result);
       await loadDashboard();
     } catch (error) {
       setMessage(message, error.message);
@@ -209,7 +224,7 @@
         }),
       });
       const result = await readResponse(response);
-      window.sessionStorage.setItem(tokenKey, result.token);
+      saveSession(result);
       registerForm.reset();
       await loadDashboard();
     } catch (error) {
@@ -281,7 +296,7 @@
   document.querySelector("#logout-button").addEventListener("click", () => {
     window.sessionStorage.removeItem(tokenKey);
     showSignedOut();
-    setMessage(accountMessage, "Cerraste sesión.");
+    setMessage(document.querySelector("#login-message"), "Cerraste sesión.");
   });
 
   const token = getToken();
@@ -292,8 +307,10 @@
       if (/Inicia sesión|Credenciales/.test(error.message)) {
         window.sessionStorage.removeItem(tokenKey);
         showSignedOut();
+        setMessage(document.querySelector("#login-message"), error.message);
       } else {
-        setMessage(accountMessage, error.message);
+        showSignedOut();
+        setMessage(document.querySelector("#login-message"), error.message);
       }
     });
   }

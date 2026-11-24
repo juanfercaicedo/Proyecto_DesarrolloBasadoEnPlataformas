@@ -10,7 +10,7 @@ const [{ createApp }, { models, prisma, Prisma }] = await Promise.all([
 const [
   { createResourceService },
   { calculateCurrentStock },
-  { consumeIngredientStock },
+  { consumeIngredientStock, createOrder },
   { AppError },
   { errorHandler },
   { createAdminSession, verifyAdminSession },
@@ -160,7 +160,21 @@ test("rechaza el registro de clientes con contraseñas débiles antes de acceder
   assert.match(body.error, /12 a 72 bytes/);
 });
 
+test("requiere configurar el secreto antes de habilitar el login de clientes", async () => {
+  delete process.env.CUSTOMER_SESSION_SECRET;
+  const response = await fetch(`${baseUrl}/api/customer/session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "ana@example.com", password: "una-clave-valida" }),
+  });
+  const body = await response.json();
+
+  assert.equal(response.status, 503);
+  assert.match(body.error, /CUSTOMER_SESSION_SECRET/);
+});
+
 test("protege el historial de pedidos y rechaza sesiones de cliente inválidas", async () => {
+  process.env.CUSTOMER_SESSION_SECRET = "test-customer-session-secret";
   const response = await fetch(`${baseUrl}/api/customer/orders`, {
     headers: { Authorization: "Bearer token-invalido" },
   });
@@ -168,6 +182,21 @@ test("protege el historial de pedidos y rechaza sesiones de cliente inválidas",
 
   assert.equal(response.status, 401);
   assert.match(body.error, /Inicia sesión/);
+  delete process.env.CUSTOMER_SESSION_SECRET;
+});
+
+test("rechaza un identificador de dirección guardada inválido antes de guardar el pedido", async () => {
+  await assert.rejects(
+    createOrder(
+      {
+        mode: "Delivery",
+        addressId: 0,
+        items: [{ name: "La Brasa", quantity: 1, extra: 0 }],
+      },
+      { sub: 7, role: "Cliente" },
+    ),
+    (error) => error.statusCode === 400 && /identificador de dirección/.test(error.message),
+  );
 });
 
 test("requiere una sesión individual para crear solicitudes a proveedores", async () => {

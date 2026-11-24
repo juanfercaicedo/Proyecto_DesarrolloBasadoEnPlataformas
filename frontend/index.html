@@ -27,7 +27,7 @@
       <a href="#menu">Menú</a>
       <a href="#promos">Promos</a>
       <a href="#ubicaciones">Ubicaciones</a>
-      <a href="account.html">Mi cuenta</a>
+      <a class="main-nav-account" href="account.html">Iniciar sesión</a>
     </nav>
 
     <div class="header-actions">
@@ -125,7 +125,7 @@
           <input id="customer-phone" name="phone" type="tel" autocomplete="tel" inputmode="numeric" pattern="[0-9]{7,15}" minlength="7" maxlength="15" required>
         </div>
         <div class="checkout-field" id="delivery-address-field" hidden>
-          <label for="saved-delivery-address">Dirección frecuente</label>
+          <label id="saved-address-label" for="saved-delivery-address">Dirección frecuente</label>
           <select id="saved-delivery-address" name="savedAddress">
             <option value="">Escribir una dirección nueva</option>
           </select>

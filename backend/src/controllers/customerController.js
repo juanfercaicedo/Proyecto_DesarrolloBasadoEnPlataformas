@@ -27,6 +27,12 @@ function normalizeEmail(email) {
   return typeof email === "string" ? email.trim().toLowerCase() : "";
 }
 
+function requireSessionSecret() {
+  if (!process.env.CUSTOMER_SESSION_SECRET) {
+    throw new AppError(503, "Configura CUSTOMER_SESSION_SECRET para habilitar las cuentas de clientes.");
+  }
+}
+
 function validateAddress(payload) {
   const label = typeof payload?.label === "string" ? payload.label.trim() : "";
   const address = typeof payload?.address === "string" ? payload.address.trim() : "";
@@ -40,6 +46,9 @@ function validateAddress(payload) {
   }
   if (reference.length > 180) {
     throw new AppError(400, "La referencia no puede superar 180 caracteres.");
+  }
+  if (payload?.reference !== undefined && typeof payload.reference !== "string") {
+    throw new AppError(400, "La referencia debe ser texto.");
   }
 
   return { etiqueta: label, direccion: address, referencia: reference || null };
@@ -86,6 +95,7 @@ export const customerController = {
         throw new AppError(400, "La contraseña debe tener entre 12 y 72 bytes.");
       }
 
+      requireSessionSecret();
       const account = await prisma.cuentaCliente.create({
         data: {
           nombres: names,
@@ -114,6 +124,7 @@ export const customerController = {
         return;
       }
 
+      requireSessionSecret();
       const account = await prisma.cuentaCliente.findUnique({ where: { correo: email } });
       if (!account || !(await bcrypt.compare(password, account.contrasena_hash))) {
         response.status(401).json({ error: "Correo o contraseña no válidos." });
