@@ -28,6 +28,9 @@ button { font: inherit; }
 .main-nav a, .footer-links a { color: #706b63; font-size: .82rem; font-weight: 700; }
 .main-nav a:hover, .text-link:hover { color: var(--red); }
 .footer-links a:hover { color: var(--yellow); }
+.header-admin { background: var(--ink); color: white; font-size: .75rem; font-weight: 700; padding: 10px 12px; white-space: nowrap; }
+.header-admin-short { display: none; }
+.header-admin:hover { background: var(--red); }
 .header-order { border-bottom: 2px solid var(--red); font-size: .82rem; font-weight: 700; padding: 8px 0; }
 
 .hero { display: grid; grid-template-columns: minmax(0, .9fr) minmax(420px, 1.1fr); min-height: 605px; max-width: 1280px; margin: auto; padding: 46px 5vw 74px; }
@@ -154,6 +157,17 @@ h1 { font-size: clamp(4rem, 19vw, 6rem); }
 .mobile-order strong span { color: white; margin-left: 7px; }
 
 @media (max-width: 480px) {
+  .site-header { padding-left: 14px; padding-right: 14px; }
+  .brand { font-size: .92rem; gap: 6px; }
+  .brand-mark { height: 30px; width: 30px; }
+  .menu-toggle { height: 34px; width: 34px; }
+  .header-actions { gap: 6px; }
+  .header-cart { min-height: 34px; min-width: 36px; padding: 0 5px; }
+  .header-cart svg { height: 16px; width: 16px; }
+  .theme-toggle { height: 34px; width: 34px; }
+  .header-admin { font-size: .68rem; padding: 8px; }
+  .header-admin-full { display: none; }
+  .header-admin-short { display: inline; }
   .header-order { display: none; }
   .hero-text { max-width: 31rem; }
   .order-strip > * { min-width: 170px; }
