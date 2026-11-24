@@ -15,6 +15,7 @@ export const models = {
 	CategoriaProducto: resource("CategoriaProducto", prisma.categoriaProducto, "id_categoria", ["nombre_categoria"]),
 	Producto: resource("Producto", prisma.producto, "id_producto", ["id_categoria", "id_usuario_admin", "nombre", "precio_venta_actual", "disponible"]),
 	Ingrediente: resource("Ingrediente", prisma.ingrediente, "id_ingrediente", ["nombre", "unidad_medida", "stock_minimo"]),
+	Proveedor: resource("Proveedor", prisma.proveedor, "id_proveedor", ["nombre", "telefono", "id_ingrediente", "cantidad_por_pedido"]),
 	LoteIngrediente: resource("LoteIngrediente", prisma.loteIngrediente, "id_lote", ["id_ingrediente", "id_usuario_admin", "codigo_lote", "fecha_ingreso", "fecha_vencimiento", "cantidad_inicial", "cantidad_disponible"]),
 	Receta: resource("Receta", prisma.receta, "id_receta", ["id_producto", "id_ingrediente", "cantidad_necesaria"]),
 	TipoPedido: resource("TipoPedido", prisma.tipoPedido, "id_tipo_pedido", ["descripcion"]),

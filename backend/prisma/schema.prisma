@@ -16,22 +16,23 @@ model Rol {
 }
 
 model Usuario {
-  id_usuario         Int               @id @default(autoincrement())
-  id_rol             Int
-  id_supervisor      Int?
-  nombres            String            @db.VarChar(100)
-  apellidos          String            @db.VarChar(100)
-  correo             String            @unique @db.VarChar(254)
-  contrasena_hash    String            @db.VarChar(255)
-  telefono           String?           @db.VarChar(20)
-  rol                Rol               @relation(fields: [id_rol], references: [id_rol])
-  supervisor         Usuario?          @relation("JerarquiaUsuarios", fields: [id_supervisor], references: [id_usuario])
-  subordinados       Usuario[]         @relation("JerarquiaUsuarios")
-  productosAdmin     Producto[]        @relation("AdministraProducto")
-  lotesRegistrados   LoteIngrediente[] @relation("RegistraLote")
-  pedidos            Pedido[]
-  pagosValidados     Pago[]            @relation("ValidaPago")
-  ordenesDespachadas OrdenSalida[]     @relation("DespachaOrden")
+  id_usuario           Int                  @id @default(autoincrement())
+  id_rol               Int
+  id_supervisor        Int?
+  nombres              String               @db.VarChar(100)
+  apellidos            String               @db.VarChar(100)
+  correo               String               @unique @db.VarChar(254)
+  contrasena_hash      String               @db.VarChar(255)
+  telefono             String?              @db.VarChar(20)
+  rol                  Rol                  @relation(fields: [id_rol], references: [id_rol])
+  supervisor           Usuario?             @relation("JerarquiaUsuarios", fields: [id_supervisor], references: [id_usuario])
+  subordinados         Usuario[]            @relation("JerarquiaUsuarios")
+  productosAdmin       Producto[]           @relation("AdministraProducto")
+  lotesRegistrados     LoteIngrediente[]    @relation("RegistraLote")
+  pedidos              Pedido[]
+  solicitudesProveedor SolicitudProveedor[] @relation("RegistraSolicitudProveedor")
+  pagosValidados       Pago[]               @relation("ValidaPago")
+  ordenesDespachadas   OrdenSalida[]        @relation("DespachaOrden")
 
   @@index([id_rol])
   @@index([id_supervisor])
@@ -64,14 +65,29 @@ model Producto {
 }
 
 model Ingrediente {
-  id_ingrediente Int               @id @default(autoincrement())
-  nombre         String            @unique @db.VarChar(120)
-  unidad_medida  String            @db.VarChar(30)
-  stock_minimo   Decimal           @default(0) @db.Decimal(10, 3)
-  lotes          LoteIngrediente[]
-  recetas        Receta[]
+  id_ingrediente       Int                  @id @default(autoincrement())
+  nombre               String               @unique @db.VarChar(120)
+  unidad_medida        String               @db.VarChar(30)
+  stock_minimo         Decimal              @default(0) @db.Decimal(10, 3)
+  lotes                LoteIngrediente[]
+  recetas              Receta[]
+  proveedores          Proveedor[]
+  solicitudesProveedor SolicitudProveedor[]
 
   @@map("INGREDIENTE")
+}
+
+model Proveedor {
+  id_proveedor        Int                  @id @default(autoincrement())
+  nombre              String               @db.VarChar(120)
+  telefono            String               @db.VarChar(20)
+  id_ingrediente      Int
+  cantidad_por_pedido Decimal              @db.Decimal(10, 3)
+  ingrediente         Ingrediente          @relation(fields: [id_ingrediente], references: [id_ingrediente])
+  solicitudes         SolicitudProveedor[]
+
+  @@index([id_ingrediente])
+  @@map("PROVEEDOR")
 }
 
 model LoteIngrediente {
@@ -90,6 +106,26 @@ model LoteIngrediente {
   @@index([id_usuario_admin])
   @@index([fecha_vencimiento])
   @@map("LOTE_INGREDIENTE")
+}
+
+model SolicitudProveedor {
+  id_solicitud     Int         @id @default(autoincrement())
+  id_proveedor     Int
+  id_ingrediente   Int
+  id_usuario_admin Int
+  cantidad         Decimal     @db.Decimal(10, 3)
+  estado           String      @default("Pendiente") @db.VarChar(20)
+  fecha_solicitud  DateTime    @default(now()) @db.Timestamp(0)
+  fecha_recepcion  DateTime?   @db.Timestamp(0)
+  proveedor        Proveedor   @relation(fields: [id_proveedor], references: [id_proveedor])
+  ingrediente      Ingrediente @relation(fields: [id_ingrediente], references: [id_ingrediente])
+  administrador    Usuario     @relation("RegistraSolicitudProveedor", fields: [id_usuario_admin], references: [id_usuario])
+
+  @@index([id_proveedor])
+  @@index([id_ingrediente])
+  @@index([id_usuario_admin])
+  @@index([estado, fecha_solicitud])
+  @@map("SOLICITUD_PROVEEDOR")
 }
 
 model Receta {

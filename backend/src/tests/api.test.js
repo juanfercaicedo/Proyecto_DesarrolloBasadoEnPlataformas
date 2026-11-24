@@ -70,8 +70,9 @@ test("rechaza orígenes web que no estén configurados", async () => {
   assert.match(body.error, /origen no está autorizado/);
 });
 
-test("registra las 16 entidades y las relaciones Prisma del pedido", () => {
-  assert.equal(Object.keys(models).length, 16);
+test("registra las entidades administrativas y las relaciones Prisma del pedido", () => {
+  assert.equal(Object.keys(models).length, 17);
+  assert.equal(Prisma.dmmf.datamodel.models.length, 18);
   const pedido = Prisma.dmmf.datamodel.models.find((model) => model.name === "Pedido");
   const relations = pedido.fields.filter((field) => field.kind === "object").map((field) => field.name);
   assert.deepEqual(relations, ["cliente", "tipo", "estado", "detalles", "pago", "factura", "ordenSalida"]);
@@ -116,6 +117,34 @@ test("rechaza sesiones administrativas vencidas o alteradas", () => {
 
   assert.equal(verifyAdminSession(token, "test-admin-session-secret", 1_000 + 8 * 60 * 60 * 1000), null);
   assert.equal(verifyAdminSession(`${token}x`, "test-admin-session-secret", 2_000), null);
+});
+
+test("requiere una sesión individual para crear solicitudes a proveedores", async () => {
+  process.env.ADMIN_API_KEY = "test-admin-session-secret";
+  const headers = { "Content-Type": "application/json" };
+  const body = JSON.stringify({ id_proveedor: 1, cantidad: 2 });
+  const apiKeyResponse = await fetch(`${baseUrl}/api/supplier-orders`, {
+    method: "POST",
+    headers: { ...headers, "x-admin-key": process.env.ADMIN_API_KEY },
+    body,
+  });
+  assert.equal(apiKeyResponse.status, 401);
+
+  const { token } = createAdminSession({
+    id_usuario: 7,
+    nombres: "Ana",
+    apellidos: "Pérez",
+    correo: "ana@example.com",
+  });
+  const invalidRequestResponse = await fetch(`${baseUrl}/api/supplier-orders`, {
+    method: "POST",
+    headers: { ...headers, Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ id_proveedor: 0, cantidad: 0.5 }),
+  });
+  const invalidRequest = await invalidRequestResponse.json();
+  assert.equal(invalidRequestResponse.status, 400);
+  assert.match(invalidRequest.error, /id_proveedor debe ser un entero positivo/);
+  delete process.env.ADMIN_API_KEY;
 });
 
 test("rechaza el alta de usuarios sin contraseña", async () => {
@@ -234,6 +263,27 @@ test("pagina recursos y limita el tamaño de página", async () => {
     }).create({ id_usuario_admin: null }),
     { statusCode: 400 },
   );
+});
+
+test("valida teléfono y cantidad habitual de proveedores", async () => {
+  const supplierService = createResourceService({
+    delegate: { create: async ({ data }) => data },
+    idField: "id_proveedor",
+    fields: ["nombre", "telefono", "id_ingrediente", "cantidad_por_pedido"],
+    name: "Proveedor",
+  });
+  const supplier = {
+    nombre: "Proveedor central",
+    telefono: "+57 300 123 4567",
+    id_ingrediente: 1,
+    cantidad_por_pedido: "2.500",
+  };
+
+  await assert.rejects(
+    supplierService.create({ ...supplier, telefono: "123" }),
+    { statusCode: 400 },
+  );
+  assert.deepEqual(await supplierService.create(supplier), supplier);
 });
 
 test("no incluye en el stock utilizable los lotes vencidos", () => {

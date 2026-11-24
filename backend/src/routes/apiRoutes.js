@@ -19,6 +19,8 @@ import { dispatchStatusesController } from "../controllers/dispatchStatusesContr
 import { dispatchOrdersController } from "../controllers/dispatchOrdersController.js";
 import { requireAdminKey } from "../middlewares/requireAdminKey.js";
 import { adminSessionController } from "../controllers/adminSessionController.js";
+import { supplierOrdersController } from "../controllers/supplierOrdersController.js";
+import { suppliersController } from "../controllers/suppliersController.js";
 
 export const apiRouter = Router();
 
@@ -41,9 +43,13 @@ apiRouter.get("/sales/summary", requireAdminKey, salesController.summary);
 apiRouter.get("/sales", requireAdminKey, salesController.list);
 apiRouter.get("/inventory/low-stock", requireAdminKey, inventoryController.lowStock);
 apiRouter.get("/inventory/lots", requireAdminKey, inventoryController.lots);
+apiRouter.get("/supplier-orders", requireAdminKey, supplierOrdersController.list);
+apiRouter.post("/supplier-orders", requireAdminKey, supplierOrdersController.create);
+apiRouter.post("/supplier-orders/:id/receive", requireAdminKey, supplierOrdersController.receive);
 
 for (const [path, controller] of [
   ["/ingredients", ingredientsController],
+  ["/suppliers", suppliersController],
   ["/ingredient-lots", ingredientLotsController],
   ["/products/manage", productsController],
   ["/orders/manage", ordersController],

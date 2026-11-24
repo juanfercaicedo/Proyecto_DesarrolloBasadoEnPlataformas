@@ -7,13 +7,14 @@ const nullableIdFields = new Set([
   "Pago.id_usuario_admin",
   "OrdenSalida.id_usuario_despacha",
 ]);
-const positiveDecimalFields = new Set(["cantidad_inicial", "cantidad_necesaria"]);
+const positiveDecimalFields = new Set(["cantidad_inicial", "cantidad_necesaria", "cantidad_por_pedido"]);
 const nonNegativeDecimalFields = new Set([
   "precio_venta_actual",
   "stock_minimo",
   "cantidad_inicial",
   "cantidad_disponible",
   "cantidad_necesaria",
+  "cantidad_por_pedido",
   "total",
   "precio_unitario_historico",
   "monto",
@@ -40,6 +41,13 @@ export function parsePagination(query = {}) {
 }
 
 function validateValue(modelName, field, value) {
+  if (modelName === "Proveedor" && field === "telefono") {
+    const digits = typeof value === "string" ? value.replace(/\D/g, "").length : 0;
+    if (digits < 7 || digits > 15 || value.length > 20) {
+      throw new AppError(400, "El teléfono del proveedor debe tener entre 7 y 15 dígitos.");
+    }
+    return;
+  }
   if (field.startsWith("id_")) {
     if (value === null && nullableIdFields.has(`${modelName}.${field}`)) return;
     if (!Number.isSafeInteger(value) || value < 1) {

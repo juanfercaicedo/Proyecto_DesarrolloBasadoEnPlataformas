@@ -45,6 +45,7 @@
           <button type="button" data-view="products">Productos</button>
           <button type="button" data-view="categories">Categorías</button>
           <button type="button" data-view="inventory">Inventario</button>
+          <button type="button" data-view="suppliers">Proveedores</button>
           <button type="button" data-view="recipes">Recetas</button>
           <button type="button" data-view="users">Usuarios</button>
           <button type="button" data-view="reports">Reportes</button>
@@ -97,10 +98,20 @@
             <div class="card-heading"><div><p class="eyebrow">Revisión de stock</p><h2>Ingredientes bajo mínimo</h2></div><button class="text-button" type="button" data-refresh="low-stock">Actualizar</button></div>
             <div class="table-wrap" id="low-stock-table"></div>
           </div>
+          <div class="admin-card">
+            <div class="card-heading"><div><p class="eyebrow">Abastecimiento</p><h2>Solicitudes a proveedores</h2></div><button class="text-button" type="button" data-refresh="supplier-orders">Actualizar</button></div>
+            <div class="table-wrap" id="supplier-orders-table"></div>
+          </div>
           <div class="resource-grid">
             <div id="ingredients-resource"></div>
             <div id="lots-resource"></div>
           </div>
+        </section>
+
+        <section class="admin-view" data-panel="suppliers" hidden>
+          <div class="view-heading"><p class="eyebrow">Abastecimiento</p><h1>Proveedores</h1></div>
+          <p class="admin-muted">Asocia cada proveedor con el ingrediente que vende y la cantidad habitual por compra.</p>
+          <div id="suppliers-resource"></div>
         </section>
 
         <section class="admin-view" data-panel="recipes" hidden>
@@ -130,6 +141,42 @@
         </section>
       </div>
     </div>
+
+    <dialog class="admin-dialog" id="supplier-order-dialog" aria-labelledby="supplier-order-title">
+      <form id="supplier-order-form" method="dialog">
+        <p class="eyebrow">Inventario bajo</p>
+        <h2 id="supplier-order-title">Solicitar ingrediente</h2>
+        <p class="admin-muted" id="supplier-order-ingredient"></p>
+        <label for="supplier-order-provider">Proveedor</label>
+        <select id="supplier-order-provider" required></select>
+        <label for="supplier-order-quantity">Cantidad solicitada</label>
+        <input id="supplier-order-quantity" type="number" min="0.001" step="0.001" required>
+        <p class="dialog-note">La solicitud quedará pendiente. El inventario solo aumenta al registrar la recepción.</p>
+        <p class="resource-error" id="supplier-order-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button class="button button-primary" type="submit">Registrar solicitud</button>
+          <button class="cancel-edit" id="cancel-supplier-order" type="button">Cancelar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="admin-dialog" id="receive-order-dialog" aria-labelledby="receive-order-title">
+      <form id="receive-order-form" method="dialog">
+        <p class="eyebrow">Entrada de inventario</p>
+        <h2 id="receive-order-title">Registrar recepción</h2>
+        <p class="admin-muted" id="receive-order-details"></p>
+        <label for="received-lot-code">Código del lote</label>
+        <input id="received-lot-code" type="text" maxlength="80" required>
+        <label for="received-expiration">Fecha de vencimiento</label>
+        <input id="received-expiration" type="date" required>
+        <p class="dialog-note">Al confirmar, se creará el lote y su cantidad se sumará al inventario disponible.</p>
+        <p class="resource-error" id="receive-order-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button class="button button-primary" type="submit">Confirmar recepción</button>
+          <button class="cancel-edit" id="cancel-receive-order" type="button">Cancelar</button>
+        </div>
+      </form>
+    </dialog>
   </main>
 
   <script src="src/assets/js/config.js"></script>

@@ -8,7 +8,7 @@ El repositorio separa las aplicaciones por responsabilidad:
 
 - [`frontend/`](./frontend): sitio estático HTML, CSS y JavaScript; se publica en GitHub Pages.
 - [`backend/`](./backend): API Node.js/Express y PostgreSQL/Prisma; se despliega como un servicio independiente en Render.
-- [`frontend/admin.html`](./frontend/admin.html): panel privado para administrar pedidos, catálogo, ingredientes, lotes, recetas, usuarios y reportes.
+- [`frontend/admin.html`](./frontend/admin.html): panel privado para administrar pedidos, catálogo, ingredientes, lotes, proveedores, solicitudes de compra, recetas, usuarios y reportes.
 
 La arquitectura es **cliente-servidor**: el navegador consume la API HTTPS. El backend se mantiene como un **monolito modular** (una sola aplicación desplegable) con capas:
 
@@ -64,7 +64,7 @@ Sirve [`frontend/`](./frontend) con una extensión como Live Server en `http://l
 
 El total se calcula en el servidor en centavos. Para llamadas administrativas directas a la API, configura y envía `x-admin-key`; el panel obtiene una sesión Bearer individual al iniciar sesión. Mantén `ADMIN_API_KEY` en el servidor y no la copies al frontend.
 
-`POST /api/admin/session` autentica cuentas con rol `Administrador` y devuelve una sesión Bearer firmada que vence en ocho horas; `/api/admin/session` permite comprobarla. El panel administrativo gestiona pedidos, productos, categorías, ingredientes, lotes con fechas de vencimiento, recetas, usuarios y reportes de ventas. Las listas CRUD administrativas, `/api/sales` y `/api/inventory/lots` aceptan `page` y `limit` (por defecto, página 1 con 50 registros; máximo 100) y responden con `pagination` junto con `data`. `/api/inventory/low-stock` devuelve el resumen completo por ingrediente. El cálculo de stock bajo excluye lotes vencidos.
+`POST /api/admin/session` autentica cuentas con rol `Administrador` y devuelve una sesión Bearer firmada que vence en ocho horas; `/api/admin/session` permite comprobarla. El panel administrativo gestiona pedidos, productos, categorías, ingredientes, lotes con fechas de vencimiento, proveedores y solicitudes de compra, recetas, usuarios y reportes de ventas. Cuando un ingrediente llega al mínimo, el administrador puede registrar una solicitud pendiente al proveedor. El inventario solo aumenta al registrar su recepción, momento en que se crea un lote con fecha de vencimiento. Las listas CRUD administrativas, `/api/sales` y `/api/inventory/lots` aceptan `page` y `limit` (por defecto, página 1 con 50 registros; máximo 100) y responden con `pagination` junto con `data`. `/api/inventory/low-stock` devuelve el resumen completo por ingrediente. El cálculo de stock bajo excluye lotes vencidos.
 
 ## Informes de auditoría
 

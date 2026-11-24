@@ -5,11 +5,21 @@
   const loginForm = document.querySelector("#login-form");
   const loginMessage = document.querySelector("#login-message");
   const adminNotice = document.querySelector("#admin-notice");
+  const supplierOrderDialog = document.querySelector("#supplier-order-dialog");
+  const supplierOrderForm = document.querySelector("#supplier-order-form");
+  const supplierOrderProvider = document.querySelector("#supplier-order-provider");
+  const supplierOrderQuantity = document.querySelector("#supplier-order-quantity");
+  const supplierOrderError = document.querySelector("#supplier-order-error");
+  const receiveOrderDialog = document.querySelector("#receive-order-dialog");
+  const receiveOrderForm = document.querySelector("#receive-order-form");
+  const receiveOrderError = document.querySelector("#receive-order-error");
   const sessionKey = "brasa-viva-admin-session";
   let session;
   let noticeTimeout;
   let refreshTimer;
   let lookups;
+  let orderSuppliers = [];
+  let selectedSupplierOrder;
 
   function showNotice(message, isError = false) {
     window.clearTimeout(noticeTimeout);
@@ -258,6 +268,32 @@
         formatDate(row.fecha_vencimiento),
       ],
       headers: ["ID", "Ingrediente", "Lote", "Disponible", "Vence"],
+    },
+    {
+      key: "suppliers",
+      title: "Proveedores de ingredientes",
+      path: "/suppliers",
+      idField: "id_proveedor",
+      target: "#suppliers-resource",
+      fields: [
+        { key: "nombre", label: "Nombre del proveedor", type: "text" },
+        { key: "telefono", label: "Teléfono", type: "tel" },
+        {
+          key: "id_ingrediente",
+          label: "Ingrediente que suministra",
+          type: "select",
+          options: (data) => data.ingredients.map((row) => [row.id_ingrediente, row.nombre]),
+        },
+        { key: "cantidad_por_pedido", label: "Cantidad habitual por compra", type: "number", step: "0.001" },
+      ],
+      columns: (row, data) => [
+        row.id_proveedor,
+        row.nombre,
+        row.telefono,
+        data.ingredients.find((ingredient) => ingredient.id_ingrediente === row.id_ingrediente)?.nombre ?? row.id_ingrediente,
+        row.cantidad_por_pedido,
+      ],
+      headers: ["ID", "Proveedor", "Teléfono", "Ingrediente", "Cantidad habitual"],
     },
     {
       key: "recipes",
@@ -635,11 +671,167 @@
     try {
       const result = await api("/inventory/low-stock");
       target.replaceChildren(makeTable(
-        ["Ingrediente", "Stock actual", "Stock mínimo", "Unidad"],
-        result.data.map((item) => [item.nombre, item.stock_actual, item.stock_minimo, item.unidad_medida]),
+        ["Ingrediente", "Stock actual", "Stock mínimo", "Unidad", "Acción"],
+        result.data.map((item) => {
+          const button = document.createElement("button");
+          button.className = "text-button";
+          button.type = "button";
+          button.textContent = "Solicitar compra";
+          button.addEventListener("click", () => openSupplierOrder(item));
+          return [item.nombre, item.stock_actual, item.stock_minimo, item.unidad_medida, button];
+        }),
         "No hay ingredientes por debajo del mínimo.",
       ));
       document.querySelector("#summary-stock").textContent = String(result.data.length);
+    } catch (error) {
+      const message = document.createElement("p");
+      message.className = "resource-error";
+      message.textContent = error.message;
+      target.replaceChildren(message);
+    }
+  }
+
+  async function openSupplierOrder(ingredient) {
+    try {
+      const result = await api("/suppliers?limit=100");
+      orderSuppliers = result.data.filter(
+        (supplier) => supplier.id_ingrediente === ingredient.id_ingrediente,
+      );
+      if (orderSuppliers.length === 0) {
+        showNotice(`Registra primero un proveedor para ${ingredient.nombre}.`, true);
+        return;
+      }
+
+      supplierOrderProvider.replaceChildren();
+      orderSuppliers.forEach((supplier) => {
+        const option = document.createElement("option");
+        option.value = String(supplier.id_proveedor);
+        option.textContent = `${supplier.nombre} · ${supplier.telefono}`;
+        supplierOrderProvider.append(option);
+      });
+      document.querySelector("#supplier-order-ingredient").textContent =
+        `${ingredient.nombre} · Stock: ${ingredient.stock_actual} ${ingredient.unidad_medida} · Mínimo: ${ingredient.stock_minimo}`;
+      supplierOrderQuantity.value = String(orderSuppliers[0].cantidad_por_pedido);
+      supplierOrderError.hidden = true;
+      supplierOrderDialog.showModal();
+    } catch (error) {
+      showNotice(error.message, true);
+    }
+  }
+
+  supplierOrderProvider.addEventListener("change", () => {
+    const supplier = orderSuppliers.find(
+      (item) => item.id_proveedor === Number(supplierOrderProvider.value),
+    );
+    if (supplier) supplierOrderQuantity.value = String(supplier.cantidad_por_pedido);
+  });
+
+  supplierOrderForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    supplierOrderError.hidden = true;
+    const submit = supplierOrderForm.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    try {
+      await api("/supplier-orders", {
+        method: "POST",
+        body: {
+          id_proveedor: Number(supplierOrderProvider.value),
+          cantidad: Number(supplierOrderQuantity.value),
+        },
+      });
+      supplierOrderDialog.close();
+      supplierOrderForm.reset();
+      showNotice("Solicitud guardada. El inventario no cambia hasta recibir el pedido.");
+      await loadSupplierOrders();
+    } catch (error) {
+      supplierOrderError.textContent = error.message;
+      supplierOrderError.hidden = false;
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  document.querySelector("#cancel-supplier-order").addEventListener("click", () => {
+    supplierOrderDialog.close();
+    supplierOrderForm.reset();
+  });
+
+  async function openReceiveOrder(order) {
+    selectedSupplierOrder = order;
+    receiveOrderError.hidden = true;
+    document.querySelector("#receive-order-details").textContent =
+      `${order.cantidad} ${order.ingrediente.unidad_medida} de ${order.ingrediente.nombre} · ${order.proveedor.nombre}`;
+    const today = new Date();
+    const localToday = new Date(today.getTime() - today.getTimezoneOffset() * 60_000)
+      .toISOString()
+      .slice(0, 10);
+    document.querySelector("#received-expiration").min = localToday;
+    receiveOrderDialog.showModal();
+  }
+
+  receiveOrderForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    receiveOrderError.hidden = true;
+    const submit = receiveOrderForm.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    try {
+      await api(`/supplier-orders/${selectedSupplierOrder.id_solicitud}/receive`, {
+        method: "POST",
+        body: {
+          codigo_lote: document.querySelector("#received-lot-code").value.trim(),
+          fecha_vencimiento: document.querySelector("#received-expiration").value,
+        },
+      });
+      receiveOrderDialog.close();
+      receiveOrderForm.reset();
+      showNotice("Recepción registrada y lote agregado al inventario.");
+      await Promise.all([loadLowStock(), loadSupplierOrders()]);
+      resourceLoaders.get("lots")();
+    } catch (error) {
+      receiveOrderError.textContent = error.message;
+      receiveOrderError.hidden = false;
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  document.querySelector("#cancel-receive-order").addEventListener("click", () => {
+    receiveOrderDialog.close();
+    receiveOrderForm.reset();
+    selectedSupplierOrder = undefined;
+  });
+
+  async function loadSupplierOrders() {
+    const target = document.querySelector("#supplier-orders-table");
+    target.replaceChildren();
+    try {
+      const result = await api("/supplier-orders?limit=100");
+      const rows = result.data.map((order) => {
+        const action = document.createElement("span");
+        if (order.estado === "Pendiente") {
+          const receiveButton = document.createElement("button");
+          receiveButton.className = "text-button";
+          receiveButton.type = "button";
+          receiveButton.textContent = "Registrar recepción";
+          receiveButton.addEventListener("click", () => openReceiveOrder(order));
+          action.append(receiveButton);
+        } else {
+          action.textContent = "—";
+        }
+        return [
+          formatDate(order.fecha_solicitud),
+          order.ingrediente.nombre,
+          order.proveedor.nombre,
+          order.proveedor.telefono,
+          `${order.cantidad} ${order.ingrediente.unidad_medida}`,
+          order.estado,
+          action,
+        ];
+      });
+      target.replaceChildren(makeTable(
+        ["Fecha", "Ingrediente", "Proveedor", "Teléfono", "Cantidad", "Estado", "Acción"],
+        rows,
+      ));
     } catch (error) {
       const message = document.createElement("p");
       message.className = "resource-error";
@@ -692,6 +884,7 @@
       if (button.dataset.refresh === "dashboard") loadDashboard();
       if (button.dataset.refresh === "orders") renderOrders(document.querySelector("#orders-table"));
       if (button.dataset.refresh === "low-stock") loadLowStock();
+      if (button.dataset.refresh === "supplier-orders") loadSupplierOrders();
     });
   });
 
@@ -708,6 +901,7 @@
     else if (name === "orders") renderOrders(document.querySelector("#orders-table"));
     else if (name === "inventory") {
       loadLowStock();
+      loadSupplierOrders();
       resourceLoaders.get("ingredients")();
       resourceLoaders.get("lots")();
     } else if (resourceLoaders.has(name)) resourceLoaders.get(name)();
@@ -719,6 +913,7 @@
         if (name === "dashboard") loadDashboard();
         else {
           loadLowStock();
+          loadSupplierOrders();
           resourceLoaders.get("lots")();
         }
       }, 30_000);
