@@ -84,3 +84,7 @@ Los diez informes, con hallazgos, correcciones y límites de validación, están
 8. [Categorías del catálogo](./frontend/src/assets/documentation/auditorias/auditoria-08-categorias-catalogo.md)
 9. [Paginación administrativa](./frontend/src/assets/documentation/auditorias/auditoria-09-paginacion-administrativa.md)
 10. [Integración continua](./frontend/src/assets/documentation/auditorias/auditoria-10-integracion-continua.md)
+
+
+- El usuario administrador es **[admin@brasaviva.local](mailto:admin@brasaviva.local)**.
+- OA+nJle4qZWLiEYQ1FK3oWuEWAUjgRReiuASP1VD31k=
