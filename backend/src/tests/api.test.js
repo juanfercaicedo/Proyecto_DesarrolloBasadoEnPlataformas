@@ -186,7 +186,7 @@ test("rechaza pedidos que superan el máximo de 99 unidades por producto", async
   const body = await response.json();
 
   assert.equal(response.status, 400);
-  assert.match(body.error, /producto del pedido no es válido/);
+  assert.match(body.error, /productos del pedido no es válido/);
 });
 
 test("rechaza cantidades negativas en recursos administrativos", async () => {
