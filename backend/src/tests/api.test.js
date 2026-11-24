@@ -157,7 +157,7 @@ test("rechaza el registro de clientes con contraseñas débiles antes de acceder
   const body = await response.json();
 
   assert.equal(response.status, 400);
-  assert.match(body.error, /12 a 72 bytes/);
+  assert.match(body.error, /entre 12 y 72 bytes/);
 });
 
 test("requiere configurar el secreto antes de habilitar el login de clientes", async () => {
